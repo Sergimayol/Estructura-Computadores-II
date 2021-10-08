@@ -9,7 +9,7 @@ PROGRAMA A REALIZAR:
   registros que modifique.
 
 2. Haga un programa en EASy68K que, utilizando la subrutina anterior y todas las que crea convenientes haga lo siguiente:
-  • Muestre la ventana de hardware.
-  • Muestre una secuencia hexadecimal desde 00000000 hasta FFFFFFFF en los visualizadores de siete segmentos, incrementando en
+  - Muestre la ventana de hardware.
+  - Muestre una secuencia hexadecimal desde 00000000 hasta FFFFFFFF en los visualizadores de siete segmentos, incrementando en
     1 el valor mostrado cada segundo aproximadamente. Con el fin de esperar un segundo puede utilizar tanto la tarea 8 como la
     tarea 23 del TRAP # 15.
