@@ -1,0 +1,138 @@
+00001000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.16.01
+Created On: 06/10/2021 15:51:25
+
+00000000                             1  *-----------------------------------------------------------
+00000000                             2  * Title      : PR1ENUNCIADO1
+00000000                             3  * Written by : Sergi
+00000000                             4  * Date       :
+00000000                             5  * Description:
+00000000                             6  *-----------------------------------------------------------
+00000000                             7              
+00001000                             8              ORG     $1000
+00001000                             9              
+00001000                            10  ; -----------------------------------------------------------------------------
+00001000  4EB9 00001078             11  START:      JSR     SHOWHWIN                ; Muestra la ventana del HW
+00001006  41F9 0000103E             12              LEA     .HWADDR,A0              ; Obtiene la @ de mapeo
+0000100C  4EB9 000010C2             13              JSR     GTHWADDR                ; Subrutina obtencion @ mapeo
+00001012  2079 0000103E             14              MOVE.L  (.HWADDR), A0           ; Carga @ 7-seg en A0
+00001018  4242                      15              CLR     D2                      ; Valor inicial a mostrar
+0000101A                            16  
+0000101A  103C 0008                 17  .LOOP       MOVE.B  #8,D0
+0000101E  4E4F                      18              TRAP    #15
+00001020  2601                      19              MOVE.L  D1,D3                   ; Guardamos el tiempo en D3
+00001022  2002                      20              MOVE.L  D2,D0                   ; Move valor inicial(D2)a D0 para verlo en HW
+00001024  4EB9 0000104E             21              JSR     NWRTSEGM                ; Mostrar num en HW
+0000102A  103C 0008                 22              MOVE.B  #8,D0
+0000102E  4E4F                      23  .WAIT       TRAP    #15                     ; Esperar 1sec.
+00001030  9283                      24              SUB.L   D3,D1                   
+00001032  B2BC 00000064             25              CMP.L   #100,D1
+00001038  6DF4                      26              BLT     .WAIT
+0000103A  5282                      27              ADDQ.L  #1,D2                   ; Preparar siguiente num.
+0000103C  60DC                      28              BRA     .LOOP                   ; LOOP
+0000103E                            29              
+0000103E                            30  .HWADDR     DS.L    4                       ;Variable para guardar @ mapeo
+0000104E                            31  
+0000104E                            32             
+0000104E                            33  ; -----------------------------------------------------------------------------
+0000104E                            34  NWRTSEGM
+0000104E                            35  ; Displays a 32 bit number as a hex string in the 7-segment display.
+0000104E                            36  ; Input    - D0.L: Number to display
+0000104E                            37  ;            A0  : Display set mapping address
+0000104E                            38  ; Output   - None
+0000104E                            39  ; Modifies - Nothing
+0000104E                            40  ; -----------------------------------------------------------------------------
+0000104E  48E7 E000                 41              MOVEM.L D0-D2,-(A7)
+00001052  2200                      42              MOVE.L  D0,D1                   ; COPY VALUE TO DISPLAY
+00001054  343C 0007                 43              MOVE.W  #7,D2                   ; PREPARE DBRA
+00001058  C07C 000F                 44              AND.W   #$000F,D0               ; BEGIN WITH DISPLAY NUMBER 0
+0000105C  C07C 0F0F                 45  .LOOP       AND.W   #$0F0F,D0               ; MASK FOR VALUE AND DISPLAY NUMBER
+00001060  4EB9 0000108A             46              JSR     WRTSEGM                 ; DISPLAY THE DATA
+00001066  0640 0100                 47              ADD.W   #$0100,D0               ; ADD ONE TO THE DISPLAY NUMBER
+0000106A  E889                      48              LSR.L   #4,D1                   ; PREPARE THE NEXT NIBBLE
+0000106C  1001                      49              MOVE.B  D1,D0                   ; TRANSFER IT TO D0
+0000106E  51CA FFEC                 50              DBRA.W  D2,.LOOP                ; LOOP FOR ALL NIBBLES
+00001072  4CDF 0007                 51              MOVEM.L (A7)+,D0-D2
+00001076  4E75                      52              RTS
+00001078                            53              
+00001078                            54  ; -----------------------------------------------------------------------------
+00001078                            55  SHOWHWIN
+00001078                            56  ; Shows the hardware window
+00001078                            57  ; Input    - None
+00001078                            58  ; Output   - None
+00001078                            59  ; Modifies - Nothing
+00001078                            60  ; -----------------------------------------------------------------------------
+00001078  48E7 C000                 61              MOVEM.L D0-D1,-(A7)
+0000107C  103C 0020                 62              MOVE.B  #32, D0
+00001080  4201                      63              CLR.B   D1
+00001082  4E4F                      64              TRAP    #15
+00001084  4CDF 0003                 65              MOVEM.L (A7)+,D0-D1
+00001088  4E75                      66              RTS
+0000108A                            67  ; -----------------------------------------------------------------------------
+0000108A                            68  WRTSEGM
+0000108A                            69  ; Displays a number between $0 and $F in the specified 7-segment display
+0000108A                            70  ; Input    - D0.W: MSB: Display number, LSB value ($0-$F) to show. A display
+0000108A                            71  ;                  number of 0 means the rightmost display whilst a value of
+0000108A                            72  ;                  7 means the leftmost.
+0000108A                            73  ;            A0  : Display set mapping address
+0000108A                            74  ; Output   - None
+0000108A                            75  ; Modifies - Nothing
+0000108A                            76  ; -----------------------------------------------------------------------------
+0000108A  48E7 C040                 77              MOVEM.L D0-D1/A1,-(A7)
+0000108E  3200                      78              MOVE.W  D0,D1
+00001090  C0BC 000000FF             79              AND.L   #$FF,D0
+00001096  4641                      80              NOT.W   D1
+00001098  EE49                      81              LSR.W   #7,D1
+0000109A  C2BC 0000000E             82              AND.L   #$0E,D1
+000010A0  43F9 000010B2             83              LEA     .DATA,A1
+000010A6  11B1 0000 1000            84              MOVE.B  (A1,D0),(A0,D1)
+000010AC  4CDF 0203                 85              MOVEM.L (A7)+,D0-D1/A1
+000010B0  4E75                      86              RTS
+000010B2= 3F 06 5B 4F 66 6D ...     87  .DATA       DC.B    $3F,$06,$5B,$4F,$66,$6D,$7D,$07,$7F,$6F,$77,$7C,$39,$5E,$79
+000010C1= 71                        88              DC.B    $71
+000010C2                            89  
+000010C2                            90  ; -----------------------------------------------------------------------------
+000010C2                            91  GTHWADDR
+000010C2                            92  ; Puts the addresses where the 7-segment display, the LED array, the switches
+000010C2                            93  ; and the toggle buttons are mapped in the RAM addresses beginning at A0 in
+000010C2                            94  ; the specified order.
+000010C2                            95  ; Input    - A0: Address to begin storing mapped hardware addresses.
+000010C2                            96  ; Output   - Addresses stored in RAM.
+000010C2                            97  ; Modifies - Nothing
+000010C2                            98  ; -----------------------------------------------------------------------------
+000010C2  48E7 E0C0                 99              MOVEM.L A0-A1/D0-D2,-(A7)
+000010C6  43F9 000010E4            100              LEA     .DATA,A1
+000010CC  343C 0003                101              MOVE.W  #3,D2
+000010D0  103C 0020                102              MOVE.B  #32,D0
+000010D4  1219                     103  .LOOP       MOVE.B  (A1)+,D1
+000010D6  4E4F                     104              TRAP    #15
+000010D8  20C1                     105              MOVE.L  D1,(A0)+
+000010DA  51CA FFF8                106              DBRA.W  D2,.LOOP
+000010DE  4CDF 0307                107              MOVEM.L (A7)+,A0-A1/D0-D2
+000010E2  4E75                     108              RTS
+000010E4                           109  
+000010E4                           110              ; TRAP #15 FUNCTION 32 PARAMETERS
+000010E4= 01 02 03 07              111  .DATA       DC.B    1,2,3,7
+000010E8                           112              DS.W    0
+000010E8                           113              
+000010E8                           114              END    START        
+
+No errors detected
+No warnings generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+GTHWADDR            10C2
+GTHWADDR:DATA       10E4
+GTHWADDR:LOOP       10D4
+NWRTSEGM            104E
+NWRTSEGM:LOOP       105C
+SHOWHWIN            1078
+START               1000
+START:HWADDR        103E
+START:LOOP          101A
+START:WAIT          102E
+WRTSEGM             108A
+WRTSEGM:DATA        10B2
