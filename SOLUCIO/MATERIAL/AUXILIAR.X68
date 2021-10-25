@@ -17,7 +17,7 @@ STR2SEG
 ; NOTE     - BEHAVIOR IN FRONT OF CHARS OUTSIDE RANGES A-Z AND a-z AND SPACE
 ;            IS UNDEFINED
 ; -----------------------------------------------------------------------------
-            MOVE.B  #STRLNGTH,D7             ;Preparar D7 para .LOOP
+            MOVE.W  #STRLNGTH,D7             ;Preparar D7 para .LOOP
             SUBQ    #1,D7                   
             
 .LOOP       MOVE.B  (A0)+,D5                ;Copiar contenido A0(Str) en D5   
@@ -205,6 +205,7 @@ BIT0:
             MOVE.B  #0,D0                   ;XXXXXXX1
             
             RTS                                         
+
 
 
 

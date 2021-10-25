@@ -71,7 +71,8 @@ MAPPRBIT
 ; OUTPUT   - NONE THROUGH REGISTERS
 ; MODIFIES - NO REGISTER MODIFIED
 ; -----------------------------------------------------------------------------            
-            MOVE.B  (A0),D0                 ; Preparamos D0, (A0) bits botones 
+            MOVE.B  (A0),D0                 ; Preparamos D0, (A0) bits botones
+            NOT.B   D0                      ; Cambiar valores bits D0 
             BSR     BITPOS                  ; Obtenemos en D0 valor botones
             JSR     STR                     ; Obtenemos valor en A0 de info a mostrar
             BSR     STR2SEG                 ; Mostrar info en display
@@ -126,6 +127,7 @@ STR7:
             
             RTS            
                       
+
 
 
 

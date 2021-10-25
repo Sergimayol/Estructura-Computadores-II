@@ -5,8 +5,8 @@
 ; HISTORY  :
 ; =============================================================================
 
-MAPGETAD    EQU     0
-MAPSHWHW    EQU     3
+MAPGETAD    EQU     1
+MAPSHWHW    EQU     2
 
 ; Longitud max del String
 STRLNGTH    EQU     8
@@ -51,6 +51,7 @@ CINCO       DC.B    'FIVE',0
 SEIS        DC.B    'SIX',0
 SIETE       DC.B    'SEVEN',0
             DS.W    0
+
 
 
 
