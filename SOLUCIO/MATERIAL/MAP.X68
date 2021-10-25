@@ -16,9 +16,12 @@ MAPINIT
 ; OUTPUT   - NO OUTPUT THROUGH REGISTERS
 ;            RAM POINTED BY A0 IS MODIFIED IF D0.B BIT 1 IS 1
 ; MODIFIES - NONE
-; -----------------------------------------------------------------------------
-BITXX:
-            BTST    #1,D0
+; -----------------------------------------------------------------------------u            BTST    #1,D0
+            
+            MOVE.W  D0,-(SP)                ;Guardar contenido resgitros
+            MOVE.W  D1,-(SP)
+            MOVE.W  A0,-(SP)
+            
             BNE     BIT1X
             BTST    #0,D0                   ;0
             BNE     BIT01 
@@ -37,6 +40,10 @@ BIT01:
             JMP     RETORNO
 
 RETORNO:
+            MOVE.W  (SP)+,A0                ;Restaurar contenido registros
+            MOVE.W  (SP)+,D1
+            MOVE.W  (SP)+,D0
+            
             RTS
 ;--------------mostrar hardware------------------------
 SHOWHWIN
@@ -71,6 +78,9 @@ MAPPRBIT
 ; OUTPUT   - NONE THROUGH REGISTERS
 ; MODIFIES - NO REGISTER MODIFIED
 ; -----------------------------------------------------------------------------            
+            MOVE.W  D0,-(SP)                ;Guardar contenido resgitros
+            MOVE.L  A0,-(SP)  
+            
             MOVE.B  (A0),D0                 ; Preparamos D0, (A0) bits botones
             NOT.B   D0                      ; Cambiar valores bits D0 
             BSR     BITPOS                  ; Obtenemos en D0 valor botones
@@ -78,6 +88,10 @@ MAPPRBIT
             BSR     STR2SEG                 ; Mostrar info en display
             MOVE.L  MAPBUTAD,A0             ; Restaurar @ A0
             MOVE.L  MAPSEGAD,A1             ; Restaurar @ A1
+            
+            MOVE.L  (SP)+,A0                ;Restaurar contenido registros
+            MOVE.W  (SP)+,D0
+            
             RTS     
 
 STR:       
@@ -127,6 +141,8 @@ STR7:
             
             RTS            
                       
+
+
 
 
 

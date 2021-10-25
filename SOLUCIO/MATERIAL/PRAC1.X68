@@ -37,6 +37,7 @@ START       MOVE.B  #MAPGETAD|MAPSHWHW,D0   ; REQUEST HARD WIN AND ADDRESSES
             INCLUDE "VARS.X68"
 
             END     START
+
 *~Font name~Courier New~
 *~Font size~14~
 *~Tab type~0~

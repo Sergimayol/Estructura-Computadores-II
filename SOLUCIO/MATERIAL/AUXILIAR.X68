@@ -17,7 +17,14 @@ STR2SEG
 ; NOTE     - BEHAVIOR IN FRONT OF CHARS OUTSIDE RANGES A-Z AND a-z AND SPACE
 ;            IS UNDEFINED
 ; -----------------------------------------------------------------------------
-            MOVE.W  #STRLNGTH,D7             ;Preparar D7 para .LOOP
+            
+            MOVE.W  D4,-(SP)                ;Guardar contenido resgitros
+            MOVE.W  D5,-(SP)
+            MOVE.W  D7,-(SP)
+            MOVE.L  A0,-(SP)
+            MOVE.L  A1,-(SP)
+            
+            MOVE.W  #STRLNGTH,D7            ;Preparar D7 para .LOOP
             SUBQ    #1,D7                   
             
 .LOOP       MOVE.B  (A0)+,D5                ;Copiar contenido A0(Str) en D5   
@@ -36,7 +43,14 @@ STR2SEG
             JSR     DECOSTR
             MOVE.B  D4,(A1)
             ADDQ    #2,A1
-            DBRA    D7,.FINAL 
+            DBRA    D7,.FINAL
+            
+            MOVE.L (SP)+,A1                 ;Restaurar contenido registros
+            MOVE.L (SP)+,A0
+            MOVE.W (SP)+,D7                 
+            MOVE.W (SP)+,D5 
+            MOVE.W (SP)+,D4
+            
             RTS
 ;--------SUBRUTINA DECODIFICAION STRING
 DECOSTR:           
@@ -204,7 +218,12 @@ BIT1:
 BIT0:
             MOVE.B  #0,D0                   ;XXXXXXX1
             
-            RTS                                         
+            RTS                      
+    
+   
+                 
+
+
 
 
 
