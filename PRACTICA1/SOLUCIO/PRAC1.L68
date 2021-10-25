@@ -1,0 +1,635 @@
+00001380 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.16.01
+Created On: 25/10/2021 15:53:33
+
+00000000                             1  ; =============================================================================
+00000000                             2  ; TITLE    : FIRST LAB ASSIGNMENT
+00000000                             3  ; AUTHOR   : ANTONI BURGUERA
+00000000                             4  ; COMMENTS : THIS FILE CANNOT BE MODIFIED
+00000000                             5  ; HISTORY  : 24/SEPTEMBER/2020 - CREATION
+00000000                             6  ; =============================================================================
+00000000                             7  
+00001000                             8              ORG     $1000
+00001000                             9  
+00001000                            10              ; --- CONSTANTS, MACROS AND CODE INCLUDES -------------------------
+00001000                            11  
+00001000                            12              INCLUDE "CONST.X68"             ; CONST. MUST BE BEFORE THEIR USE
+00001000                            13  ; =============================================================================
+00001000                            14  ; TITLE    : CONSTANTS
+00001000                            15  ; AUTHOR   : Sergi Mayol & Alejandro Rodriguez
+00001000                            16  ; COMMENTS :
+00001000                            17  ; HISTORY  :
+00001000                            18  ; =============================================================================
+00001000                            19  
+00001000  =00000001                 20  MAPGETAD    EQU     1
+00001000  =00000002                 21  MAPSHWHW    EQU     2
+00001000                            22  
+00001000                            23  ; Longitud max del String
+00001000  =00000008                 24  STRLNGTH    EQU     8
+00001000                            25                        
+00001000                            26  ; Valor de cada letra en Display
+00001000= 77                        27  COD_A       DC.B    %01110111
+00001001= 7C                        28  COD_B       DC.B    %01111100
+00001002= 39                        29  COD_C       DC.B    %00111001
+00001003= 5E                        30  COD_D       DC.B    %01011110
+00001004= 79                        31  COD_E       DC.B    %01111001
+00001005= 71                        32  COD_F       DC.B    %01110001
+00001006= 7D                        33  COD_G       DC.B    %01111101
+00001007= 76                        34  COD_H       DC.B    %01110110
+00001008= 06                        35  COD_I       DC.B    %00000110
+00001009= 1E                        36  COD_J       DC.B    %00011110
+0000100A= 76                        37  COD_K       DC.B    %01110110
+0000100B= 38                        38  COD_L       DC.B    %00111000
+0000100C= 37                        39  COD_M       DC.B    %00110111
+0000100D= 37                        40  COD_N       DC.B    %00110111
+0000100E= 3F                        41  COD_O       DC.B    %00111111
+0000100F= 73                        42  COD_P       DC.B    %01110011
+00001010= 3F                        43  COD_Q       DC.B    %00111111
+00001011= 50                        44  COD_R       DC.B    %01010000
+00001012= 6D                        45  COD_S       DC.B    %01101101
+00001013= 78                        46  COD_T       DC.B    %01111000
+00001014= 3E                        47  COD_U       DC.B    %00111110
+00001015= 3E                        48  COD_V       DC.B    %00111110
+00001016= 3E                        49  COD_W       DC.B    %00111110
+00001017= 76                        50  COD_X       DC.B    %01110110
+00001018= 66                        51  COD_Y       DC.B    %01100110
+00001019= 5B                        52  COD_Z       DC.B    %01011011
+0000101A= 00                        53  COD_SPACE   DC.B    %00000000
+0000101B                            54  
+0000101B                            55  ; String con el valor de cada boton
+0000101B= 4E 4F 4E 45 00            56  NADA        DC.B    'NONE',0
+00001020= 5A 45 52 4F 00            57  CERO        DC.B    'ZERO',0
+00001025= 4F 4E 45 00               58  UNO         DC.B    'ONE',0
+00001029= 54 57 4F 00               59  DOS         DC.B    'TWO',0
+0000102D= 54 48 52 45 45 00         60  TRES        DC.B    'THREE',0
+00001033= 46 4F 55 52 00            61  CUATRO      DC.B    'FOUR',0
+00001038= 46 49 56 45 00            62  CINCO       DC.B    'FIVE',0
+0000103D= 53 49 58 00               63  SEIS        DC.B    'SIX',0
+00001041= 53 45 56 45 4E 00         64  SIETE       DC.B    'SEVEN',0
+00001048                            65              DS.W    0
+00001048                            66  
+00001048                            67  
+00001048                            68  
+00001048                            69  
+00001048                            70  
+00001048                            71  
+00001048                            72  
+00001048                            73  
+00001048                            74  
+00001048                            75  
+00001048                            76  
+00001048                            77  -------------------- end include --------------------
+00001048                            78              INCLUDE "MAP.X68"               ; MEMORY MAPPED HARDWARE CODE
+00001048                            79  ; =============================================================================
+00001048                            80  ; TITLE    : MEMORY MAPPED HARD CODE
+00001048                            81  ; AUTHOR   : Alejandro Rodriguez & Sergi Mayol
+00001048                            82  ; COMMENTS :
+00001048                            83  ; HISTORY  :
+00001048                            84  ; =============================================================================
+00001048                            85  ; -----------------------------------------------------------------------------
+00001048                            86  MAPINIT
+00001048                            87  ; SHOWS HARDWARE WINDOW AND GETS MAPPING ADDRESSESG.
+00001048                            88  ; INPUT    - D0.B BIT 0: SHOW HARDWARE WINDOW (1: YES, 0: NO)
+00001048                            89  ;                 BIT 1: GET MAPPING ADDRESSES (1: YES, 0: NO)
+00001048                            90  ;                 BIT 2-7: NOT USED.
+00001048                            91  ;            A0 POINTER TO RAM ADDRESS TO STORE THE MAPPING ADDRESSES IN THIS
+00001048                            92  ;               ORDER: 7-SEGMENT, LEDS, SWITCHES, BUTTONS.
+00001048                            93  ;               IF D0.B BIT 1 IS ZERO, A0 IS NOT USED.
+00001048                            94  ; OUTPUT   - NO OUTPUT THROUGH REGISTERS
+00001048                            95  ;            RAM POINTED BY A0 IS MODIFIED IF D0.B BIT 1 IS 1
+00001048                            96  ; MODIFIES - NONE
+00001048                            97  ; -----------------------------------------------------------------------------u            BTST    #1,D0
+00001048                            98              
+00001048  3F00                      99              MOVE.W  D0,-(SP)                ;Guardar contenido resgitros
+0000104A  3F01                     100              MOVE.W  D1,-(SP)
+0000104C  3F08                     101              MOVE.W  A0,-(SP)
+0000104E                           102              
+0000104E  6600 0010                103              BNE     BIT1X
+00001052  0800 0000                104              BTST    #0,D0                   ;0
+00001056  6600 002E                105              BNE     BIT01 
+0000105A  4EF9 00001092            106              JMP     RETORNO                 ;00 No hacer nada.
+00001060                           107  BIT1X:
+00001060  0800 0000                108              BTST    #0,D0                   ;10
+00001064  6600 000E                109              BNE     BIT11
+00001068  4EB9 000010AC            110              JSR     GTHWADDR                ;10 Recoger @ de mapeo.
+0000106E  4EF9 00001092            111              JMP     RETORNO
+00001074                           112  BIT11:
+00001074  4EB9 0000109A            113              JSR     SHOWHWIN
+0000107A  4EB9 000010AC            114              JSR     GTHWADDR                ;11 Mostrar ventana y recoger @ de mapeo.
+00001080  4EF9 00001092            115              JMP     RETORNO
+00001086                           116  BIT01:
+00001086  4EB9 0000109A            117              JSR     SHOWHWIN                ;01 Mostrar ventana.
+0000108C  4EF9 00001092            118              JMP     RETORNO
+00001092                           119  
+00001092                           120  RETORNO:
+00001092  305F                     121              MOVE.W  (SP)+,A0                ;Restaurar contenido registros
+00001094  321F                     122              MOVE.W  (SP)+,D1
+00001096  301F                     123              MOVE.W  (SP)+,D0
+00001098                           124              
+00001098  4E75                     125              RTS
+0000109A                           126  ;--------------mostrar hardware------------------------
+0000109A                           127  SHOWHWIN
+0000109A  48E7 C000                128              MOVEM.L D0-D1,-(A7)
+0000109E  103C 0020                129              MOVE.B  #32, D0
+000010A2  4201                     130              CLR.B   D1
+000010A4  4E4F                     131              TRAP    #15
+000010A6  4CDF 0003                132              MOVEM.L (A7)+,D0-D1
+000010AA  4E75                     133              RTS
+000010AC                           134   ;--------------get parametros-------------------------
+000010AC                           135  GTHWADDR
+000010AC  48E7 E0C0                136              MOVEM.L A0-A1/D0-D2,-(A7)
+000010B0  43F9 000010CE            137              LEA     .DATA,A1
+000010B6  343C 0003                138              MOVE.W  #3,D2
+000010BA  103C 0020                139              MOVE.B  #32,D0
+000010BE  1219                     140  .LOOP       MOVE.B  (A1)+,D1
+000010C0  4E4F                     141              TRAP    #15
+000010C2  20C1                     142              MOVE.L  D1,(A0)+
+000010C4  51CA FFF8                143              DBRA.W  D2,.LOOP
+000010C8  4CDF 0307                144              MOVEM.L (A7)+,A0-A1/D0-D2
+000010CC  4E75                     145              RTS
+000010CE                           146              ; TRAP #15 FUNCTION 32 PARAMETERS
+000010CE= 01 02 03 07              147  .DATA       DC.B    1,2,3,7
+000010D2                           148              DS.W    0
+000010D2                           149  ; -----------------------------------------------------------------------------
+000010D2                           150  MAPPRBIT
+000010D2                           151  ; PRINTS 'ZERO','ONE','TWO',...,'SEVEN' INTO THE 7-SEGMENT DISPLAYS DEPENDING
+000010D2                           152  ; ON THE BUTTON THAT IS PRESSED (ZERO IS THE RIGHTMOST, SEVEN IS THE LEFTMOST).
+000010D2                           153  ; PRINTS 'NONE' IF NO BUTTON IS PRESSED.
+000010D2                           154  ; INPUT    - A0 BUTTONS MAPPING ADDRESS
+000010D2                           155  ;            A1 7-SEGMENT DISPLAY MAPPING ADDRESS
+000010D2                           156  ; OUTPUT   - NONE THROUGH REGISTERS
+000010D2                           157  ; MODIFIES - NO REGISTER MODIFIED
+000010D2                           158  ; -----------------------------------------------------------------------------            
+000010D2  3F00                     159              MOVE.W  D0,-(SP)                ;Guardar contenido resgitros
+000010D4  2F08                     160              MOVE.L  A0,-(SP)  
+000010D6                           161              
+000010D6  1010                     162              MOVE.B  (A0),D0                 ; Preparamos D0, (A0) bits botones
+000010D8  4600                     163              NOT.B   D0                      ; Cambiar valores bits D0 
+000010DA  6100 022E                164              BSR     BITPOS                  ; Obtenemos en D0 valor botones
+000010DE  4EB9 000010FA            165              JSR     STR                     ; Obtenemos valor en A0 de info a mostrar
+000010E4  6100 008A                166              BSR     STR2SEG                 ; Mostrar info en display
+000010E8  2079 000013B0            167              MOVE.L  MAPBUTAD,A0             ; Restaurar @ A0
+000010EE  2279 000013A4            168              MOVE.L  MAPSEGAD,A1             ; Restaurar @ A1
+000010F4                           169              
+000010F4  205F                     170              MOVE.L  (SP)+,A0                ;Restaurar contenido registros
+000010F6  301F                     171              MOVE.W  (SP)+,D0
+000010F8                           172              
+000010F8  4E75                     173              RTS     
+000010FA                           174  
+000010FA                           175  STR:       
+000010FA  B07C 0008                176              CMP     #8,D0                  
+000010FE  6600 0008                177              BNE     STR0
+00001102  41F8 101B                178              LEA     NADA,A0
+00001106  4E75                     179              RTS
+00001108                           180              
+00001108  B07C 0000                181  STR0:       CMP     #0,D0
+0000110C  6600 0008                182              BNE     STR1
+00001110  41F8 1020                183              LEA     CERO,A0
+00001114  4E75                     184              RTS
+00001116                           185  
+00001116                           186  STR1:       
+00001116  B07C 0001                187              CMP     #1,D0
+0000111A  6600 0008                188              BNE     STR2
+0000111E  41F8 1025                189              LEA     UNO,A0
+00001122  4E75                     190              RTS
+00001124                           191              
+00001124  B07C 0002                192  STR2:       CMP     #2,D0
+00001128  6600 0008                193              BNE     STR3
+0000112C  41F8 1029                194              LEA     DOS,A0
+00001130  4E75                     195              RTS
+00001132                           196              
+00001132  B07C 0003                197  STR3:       CMP     #3,D0
+00001136  6600 0008                198              BNE     STR4
+0000113A  41F8 102D                199              LEA     TRES,A0
+0000113E  4E75                     200              RTS
+00001140                           201  
+00001140  B07C 0004                202  STR4:       CMP     #4,D0
+00001144  6600 0008                203              BNE     STR5
+00001148  41F8 1033                204              LEA     CUATRO,A0
+0000114C  4E75                     205              RTS
+0000114E                           206              
+0000114E  B07C 0005                207  STR5:       CMP     #5,D0
+00001152  6600 0008                208              BNE     STR6
+00001156  41F8 1038                209              LEA     CINCO,A0
+0000115A  4E75                     210              RTS
+0000115C                           211              
+0000115C  B07C 0006                212  STR6:       CMP     #6,D0
+00001160  6600 0008                213              BNE     STR7
+00001164  41F8 103D                214              LEA     SEIS,A0
+00001168  4E75                     215              RTS
+0000116A                           216  
+0000116A                           217  STR7:       
+0000116A  41F8 1041                218              LEA     SIETE,A0
+0000116E                           219              
+0000116E  4E75                     220              RTS            
+00001170                           221                        
+00001170                           222  
+00001170                           223  
+00001170                           224  
+00001170                           225  
+00001170                           226  
+00001170                           227  
+00001170                           228  
+00001170                           229  
+00001170                           230  
+00001170                           231  
+00001170                           232  
+00001170                           233  
+00001170                           234  
+00001170                           235  -------------------- end include --------------------
+00001170                           236              INCLUDE "AUXILIAR.X68"          ; AUXILIARY/MISCELLANY CODE
+00001170                           237  ; =============================================================================
+00001170                           238  ; TITLE    : AUXILIARY CODE
+00001170                           239  ; AUTHOR   : Alejandro Rodriguez & Sergi Mayol
+00001170                           240  ; COMMENTS :
+00001170                           241  ; HISTORY  :
+00001170                           242  ; =============================================================================
+00001170                           243  ; -----------------------------------------------------------------------------
+00001170                           244  STR2SEG
+00001170                           245  ; CONVERTS A STRING OF 8 CHARS INTO THE 7-SEGMENT DISPLAYS WORDS SEQUENCE,
+00001170                           246  ; READY TO BE SENT TO THE DISPLAYS.
+00001170                           247  ; ACCEPTS CHARACTERS FROM A TO Z AND FROM a TO z AND SPACE. CAPITAL AND NON
+00001170                           248  ; CAPITAL ARE DISPLAYED WITH THE SAME GRAPHIC.
+00001170                           249  ; INPUT    - A0 POINTER TO THE STRING (8 CHAR)
+00001170                           250  ;            A1 POINTER TO THE ADDRESS WHERE TO PUT THE WORDS SEQUENCE
+00001170                           251  ; OUTPUT   - MEMORY FROM (A1) TO (A0+15) MODIFIED.
+00001170                           252  ; MODIFIES - NO REGISTERS MODIFIED
+00001170                           253  ; NOTE     - BEHAVIOR IN FRONT OF CHARS OUTSIDE RANGES A-Z AND a-z AND SPACE
+00001170                           254  ;            IS UNDEFINED
+00001170                           255  ; -----------------------------------------------------------------------------
+00001170                           256              
+00001170  3F04                     257              MOVE.W  D4,-(SP)                ;Guardar contenido resgitros
+00001172  3F05                     258              MOVE.W  D5,-(SP)
+00001174  3F07                     259              MOVE.W  D7,-(SP)
+00001176  2F08                     260              MOVE.L  A0,-(SP)
+00001178  2F09                     261              MOVE.L  A1,-(SP)
+0000117A                           262              
+0000117A  3E3C 0008                263              MOVE.W  #STRLNGTH,D7            ;Preparar D7 para .LOOP
+0000117E  5347                     264              SUBQ    #1,D7                   
+00001180                           265              
+00001180  1A18                     266  .LOOP       MOVE.B  (A0)+,D5                ;Copiar contenido A0(Str) en D5   
+00001182  BA7C 0060                267              CMP     #96,D5                  
+00001186  6F00 0006                268              BLE     .DECO                   ;<=96 salta pq ya es mayus
+0000118A  0445 0020                269              SUB.W   #32,D5                  ;Convierte a mayus(a=97, A=65)
+0000118E                           270  .DECO
+0000118E  BA7C 0000                271              CMP     #0,D5
+00001192  6700 0010                272              BEQ     .FINAL
+00001196  4EB9 000011C2            273              JSR     DECOSTR                 ;Salto a subrutina decostr
+0000119C  1284                     274              MOVE.B  D4,(A1)                 ;Guardar deco str en A1
+0000119E  5449                     275              ADDQ    #2,A1                   ;Incremento @ A1
+000011A0  51CF FFDE                276              DBRA    D7,.LOOP                
+000011A4                           277  .FINAL
+000011A4  1A3C 0000                278              MOVE.B  #0,D5                   ;Bucle para apagar seg restantes
+000011A8  4EB9 000011C2            279              JSR     DECOSTR
+000011AE  1284                     280              MOVE.B  D4,(A1)
+000011B0  5449                     281              ADDQ    #2,A1
+000011B2  51CF FFF0                282              DBRA    D7,.FINAL
+000011B6                           283              
+000011B6  225F                     284              MOVE.L (SP)+,A1                 ;Restaurar contenido registros
+000011B8  205F                     285              MOVE.L (SP)+,A0
+000011BA  3E1F                     286              MOVE.W (SP)+,D7                 
+000011BC  3A1F                     287              MOVE.W (SP)+,D5 
+000011BE  381F                     288              MOVE.W (SP)+,D4
+000011C0                           289              
+000011C0  4E75                     290              RTS
+000011C2                           291  ;--------SUBRUTINA DECODIFICAION STRING
+000011C2                           292  DECOSTR:           
+000011C2                           293              
+000011C2  4284                     294              CLR.L   D4                      ;Vaciar registro D4 / deco caracter
+000011C4                           295              
+000011C4  BA7C 0041                296  A           CMP     #'A',D5
+000011C8  6600 0006                297              BNE     B
+000011CC  1838 1000                298              MOVE.B  COD_A,D4
+000011D0                           299              
+000011D0  BA7C 0042                300  B           CMP     #'B',D5
+000011D4  6600 0006                301              BNE     C
+000011D8  1838 1001                302              MOVE.B  COD_B,D4
+000011DC                           303              
+000011DC  BA7C 0043                304  C           CMP     #'C',D5
+000011E0  6600 0006                305              BNE     D
+000011E4  1838 1002                306              MOVE.B  COD_C,D4
+000011E8                           307              
+000011E8  BA7C 0044                308  D           CMP     #'D',D5
+000011EC  6600 0006                309              BNE     E
+000011F0  1838 1001                310              MOVE.B  COD_B,D4
+000011F4                           311              
+000011F4  BA7C 0045                312  E           CMP     #'E',D5
+000011F8  6600 0006                313              BNE     F
+000011FC  1838 1004                314              MOVE.B  COD_E,D4
+00001200                           315              
+00001200  BA7C 0046                316  F           CMP     #'F',D5
+00001204  6600 0006                317              BNE     G
+00001208  1838 1005                318              MOVE.B  COD_F,D4
+0000120C                           319              
+0000120C  BA7C 0047                320  G           CMP     #'G',D5
+00001210  6600 0006                321              BNE     H
+00001214  1838 1006                322              MOVE.B  COD_G,D4
+00001218                           323              
+00001218  BA7C 0048                324  H           CMP     #'H',D5
+0000121C  6600 0006                325              BNE     I
+00001220  1838 1007                326              MOVE.b  COD_H,D4
+00001224                           327              
+00001224  BA7C 0049                328  I           CMP     #'I',D5
+00001228  6600 0006                329              BNE     J
+0000122C  1838 1008                330              MOVE.B  COD_I,D4
+00001230                           331              
+00001230  BA7C 004A                332  J           CMP     #'J',D5
+00001234  6600 0006                333              BNE     K
+00001238  1838 1009                334              MOVE.B  COD_J,D4
+0000123C                           335              
+0000123C  BA7C 004B                336  K           CMP     #'K',D5
+00001240  6600 0006                337              BNE     L
+00001244  1838 100A                338              MOVE.B  COD_K,D4
+00001248                           339              
+00001248  BA7C 004C                340  L           CMP     #'L',D5
+0000124C  6600 0006                341              BNE     M
+00001250  1838 100B                342              MOVE.B  COD_L,D4
+00001254                           343                    
+00001254  BA7C 004D                344  M           CMP     #'M',D5
+00001258  6600 0006                345              BNE     N                       
+0000125C  1838 100C                346              MOVE.B  COD_M,D4
+00001260                           347              
+00001260  BA7C 004E                348  N           CMP     #'N',D5
+00001264  6600 0006                349              BNE     O
+00001268  1838 100D                350              MOVE.B  COD_N,D4
+0000126C                           351  
+0000126C  BA7C 004F                352  O           CMP     #'O',D5
+00001270  6600 0006                353              BNE     P
+00001274  1838 100E                354              MOVE.B  COD_O,D4
+00001278                           355              
+00001278  BA7C 0050                356  P           CMP     #'P',D5
+0000127C  6600 0006                357              BNE     Q                       
+00001280  1838 100F                358              MOVE.B  COD_P,D4
+00001284                           359              
+00001284  BA7C 0051                360  Q           CMP     #'Q',D5
+00001288  6600 0006                361              BNE     R
+0000128C  1838 1010                362              MOVE.B  COD_Q,D4
+00001290                           363              
+00001290  BA7C 0052                364  R           CMP     #'R',D5
+00001294  6600 0006                365              BNE     S
+00001298  1838 1011                366              MOVE.B  COD_R,D4
+0000129C                           367              
+0000129C  BA7C 0053                368  S           CMP     #'S',D5
+000012A0  6600 0006                369              BNE     T
+000012A4  1838 1012                370              MOVE.B  COD_S,D4
+000012A8                           371              
+000012A8  BA7C 0054                372  T           CMP     #'T',D5
+000012AC  6600 0006                373              BNE     U
+000012B0  1838 1013                374              MOVE.B  COD_T,D4
+000012B4                           375              
+000012B4  BA7C 0055                376  U           CMP     #'U',D5
+000012B8  6600 0006                377              BNE     V
+000012BC  1838 1014                378              MOVE.B  COD_U,D4
+000012C0                           379              
+000012C0  BA7C 0056                380  V           CMP     #'V',D5
+000012C4  6600 0006                381              BNE     W
+000012C8  1838 1015                382              MOVE.B  COD_V,D4
+000012CC                           383              
+000012CC  BA7C 0057                384  W           CMP     #'W',D5
+000012D0  6600 0006                385              BNE     X
+000012D4  1838 1016                386              MOVE.B  COD_W,D4
+000012D8                           387  
+000012D8  BA7C 0058                388  X           CMP     #'X',D5
+000012DC  6600 0006                389              BNE     Y
+000012E0  1838 1017                390              MOVE.B  COD_X,D4
+000012E4                           391  
+000012E4  BA7C 0059                392  Y           CMP     #'Y',D5
+000012E8  6600 0006                393              BNE     Z
+000012EC  1838 1018                394              MOVE.B  COD_Y,D4
+000012F0                           395  
+000012F0  BA7C 005A                396  Z           CMP     #'Z',D5
+000012F4  6600 0006                397              BNE     space
+000012F8  1838 1019                398              MOVE.B  COD_Z,D4
+000012FC                           399              
+000012FC  BA7C 0020                400  space       CMP     #' ',D5
+00001300  6600 0006                401              BNE     return
+00001304  1838 101A                402              MOVE.B  COD_SPACE,D4
+00001308                           403  
+00001308  4E75                     404  return      RTS
+0000130A                           405  
+0000130A                           406  ; -----------------------------------------------------------------------------
+0000130A                           407  BITPOS
+0000130A                           408  ; GIVEN A BYTE, IT RETURNS THE POSITION (VALUE BETWEEN 0 AND 7) OF THE RIGHT-
+0000130A                           409  ; MOST BIT VALUED ONE. IF ALL BITS ARE ZERO, OUTPUTS 8
+0000130A                           410  ; INPUT    - D0.B THE BYTE
+0000130A                           411  ; OUTPUT   - D0.B THE BIT POSITION
+0000130A                           412  ; MODIFIES - NO REGISTER, ASIDE OF D0.B
+0000130A                           413  ; -----------------------------------------------------------------------------
+0000130A  0800 0000                414              BTST    #0,D0
+0000130E  6600 006A                415              BNE     BIT0
+00001312  0800 0001                416              BTST    #1,D0                   ;XXXXXXX0
+00001316  6600 005C                417              BNE     BIT1
+0000131A  0800 0002                418              BTST    #2,D0                   ;XXXXXX00
+0000131E  6600 004E                419              BNE     BIT2
+00001322  0800 0003                420              BTST    #3,D0                   ;XXXXX000
+00001326  6600 0040                421              BNE     BIT3
+0000132A  0800 0004                422              BTST    #4,D0                   ;XXXX0000
+0000132E  6600 0032                423              BNE     BIT4
+00001332  0800 0005                424              BTST    #5,D0                   ;XXX00000
+00001336  6600 0024                425              BNE     BIT5
+0000133A  0800 0006                426              BTST    #6,D0                   ;XX000000
+0000133E  6600 0016                427              BNE     BIT6
+00001342  0800 0007                428              BTST    #7,D0                   ;X0000000
+00001346  6600 0008                429              BNE     BIT7                         
+0000134A  103C 0008                430              MOVE.B  #8,D0                   ;00000000                     
+0000134E  4E75                     431              RTS                            
+00001350                           432  
+00001350                           433  BIT7:
+00001350  103C 0007                434              MOVE.B  #7,D0                   ;10000000
+00001354  4E75                     435              RTS
+00001356                           436  BIT6:       
+00001356  103C 0006                437              MOVE.B  #6,D0                   ;X1000000
+0000135A  4E75                     438              RTS
+0000135C                           439  BIT5:
+0000135C  103C 0005                440              MOVE.B  #5,D0                   ;XX100000
+00001360  4E75                     441              RTS
+00001362                           442  BIT4:
+00001362  103C 0004                443              MOVE.B  #4,D0                   ;XXX10000
+00001366  4E75                     444              RTS
+00001368                           445  BIT3:
+00001368  103C 0003                446              MOVE.B  #3,D0                   ;XXXX1000
+0000136C  4E75                     447              RTS
+0000136E                           448  BIT2:
+0000136E  103C 0002                449              MOVE.B  #2,D0                   ;XXXXX100
+00001372  4E75                     450              RTS
+00001374                           451  BIT1:
+00001374  103C 0001                452              MOVE.B  #1,D0                   ;XXXXXX10
+00001378  4E75                     453              RTS
+0000137A                           454  BIT0:
+0000137A  103C 0000                455              MOVE.B  #0,D0                   ;XXXXXXX1
+0000137E                           456              
+0000137E  4E75                     457              RTS                      
+00001380                           458      
+00001380                           459     
+00001380                           460                   
+00001380                           461  
+00001380                           462  
+00001380                           463  
+00001380                           464  
+00001380                           465  
+00001380                           466  
+00001380                           467  
+00001380                           468  
+00001380                           469  
+00001380                           470  
+00001380                           471  
+00001380                           472  
+00001380                           473  
+00001380                           474  
+00001380                           475  -------------------- end include --------------------
+00001380                           476  
+00001380                           477              ; --- MAIN PROGRAM ------------------------------------------------
+00001380                           478  
+00001380                           479              ; --- INITIALIZATION
+00001380                           480  
+00001380  103C 0003                481  START       MOVE.B  #MAPGETAD|MAPSHWHW,D0   ; REQUEST HARD WIN AND ADDRESSES
+00001384  41F9 000013A4            482              LEA     MAPADDR,A0              ; PREPARE STORAGE PARAMETER
+0000138A  4EB8 1048                483              JSR     MAPINIT                 ; SHOW WIN AND GET ADDRESSES
+0000138E  2079 000013B0            484              MOVE.L  (MAPBUTAD), A0          ; GET BUTTONS MAPPING ADDRESS
+00001394  2279 000013A4            485              MOVE.L  (MAPSEGAD), A1          ; GET DISPLAYS MAPPING ADDRESS
+0000139A                           486  
+0000139A                           487              ; --- INFINITE LOOP
+0000139A                           488  
+0000139A  4EB8 10D2                489  .LOOP       JSR     MAPPRBIT                ; UPDATE DISP. ACCORDING TO BUTTONS
+0000139E  60FA                     490              BRA     .LOOP                   ; REPEAT UNTIL THE END OF TIMES
+000013A0                           491  
+000013A0                           492              ; --- END OF SIMULATION -------------------------------------------
+000013A0                           493  
+000013A0  FFFF FFFF                494              SIMHALT                         ; THIS LINE WILL NEVER BE REACHED
+000013A4                           495  
+000013A4                           496              ; --- VARIABLE DECLARATIONS ---------------------------------------
+000013A4                           497  
+000013A4                           498              INCLUDE "VARS.X68"
+000013A4                           499  ;=============================================================================
+000013A4                           500  VARS
+000013A4                           501  ;=============================================================================
+000013A4                           502  MAPADDR:
+000013A4                           503  
+000013A4                           504  MAPSEGAD    DS.L    1           ; DISPLAYS MAPPING ADDRESS
+000013A8                           505  LEDADDR     DS.L    1           ; LED MAPPING ADDRESS
+000013AC                           506  STCHADDR    DS.L    1           ; SWITCH MAPPING ADDRESS
+000013B0                           507  MAPBUTAD    DS.L    1           ; BUTTONS MAPPING ADDRESS
+000013B4                           508  
+000013B4                           509  
+000013B4                           510  
+000013B4                           511  
+000013B4                           512  
+000013B4                           513  -------------------- end include --------------------
+000013B4                           514  
+000013B4                           515              END     START
+
+No errors detected
+No warnings generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+A                   11C4
+B                   11D0
+BIT0                137A
+BIT01               1086
+BIT1                1374
+BIT11               1074
+BIT1X               1060
+BIT2                136E
+BIT3                1368
+BIT4                1362
+BIT5                135C
+BIT6                1356
+BIT7                1350
+BITPOS              130A
+C                   11DC
+CERO                1020
+CINCO               1038
+COD_A               1000
+COD_B               1001
+COD_C               1002
+COD_D               1003
+COD_E               1004
+COD_F               1005
+COD_G               1006
+COD_H               1007
+COD_I               1008
+COD_J               1009
+COD_K               100A
+COD_L               100B
+COD_M               100C
+COD_N               100D
+COD_O               100E
+COD_P               100F
+COD_Q               1010
+COD_R               1011
+COD_S               1012
+COD_SPACE           101A
+COD_T               1013
+COD_U               1014
+COD_V               1015
+COD_W               1016
+COD_X               1017
+COD_Y               1018
+COD_Z               1019
+CUATRO              1033
+D                   11E8
+DECOSTR             11C2
+DOS                 1029
+E                   11F4
+F                   1200
+G                   120C
+GTHWADDR            10AC
+GTHWADDR:DATA       10CE
+GTHWADDR:LOOP       10BE
+H                   1218
+I                   1224
+J                   1230
+K                   123C
+L                   1248
+LEDADDR             13A8
+M                   1254
+MAPADDR             13A4
+MAPBUTAD            13B0
+MAPGETAD            1
+MAPINIT             1048
+MAPPRBIT            10D2
+MAPSEGAD            13A4
+MAPSHWHW            2
+N                   1260
+NADA                101B
+O                   126C
+P                   1278
+Q                   1284
+R                   1290
+RETORNO             1092
+RETURN              1308
+S                   129C
+SEIS                103D
+SHOWHWIN            109A
+SIETE               1041
+SPACE               12FC
+START               1380
+START:LOOP          139A
+STCHADDR            13AC
+STR                 10FA
+STR0                1108
+STR1                1116
+STR2                1124
+STR2SEG             1170
+STR2SEG:DECO        118E
+STR2SEG:FINAL       11A4
+STR2SEG:LOOP        1180
+STR3                1132
+STR4                1140
+STR5                114E
+STR6                115C
+STR7                116A
+STRLNGTH            8
+T                   12A8
+TRES                102D
+U                   12B4
+UNO                 1025
+V                   12C0
+VARS                13A4
+W                   12CC
+X                   12D8
+Y                   12E4
+Z                   12F0
