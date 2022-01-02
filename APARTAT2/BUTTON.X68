@@ -43,11 +43,11 @@ BTNINIT
 
             MOVEM.L D0-D7/A0-A1,-(A7)       ; Save content registers
             
-            MOVE.L  A0,(A1)                 ; Copy SDB pointer into VDB
-*            AND.B   #0,4(A1)                
+            MOVE.L  A1,(A0)                 ; Copy SDB pointer into VDB
+*            AND.B   #0,4(A0)                
 ; Creo que se puede hacer esto(linea de arriba)en vez de lo de abajo
-            ADDQ.B  #4,A1                   ; @ of VDB Status
-            AND.B   #0,(A1)                 ; Clear status byte of VDB
+            ADDQ.B  #4,A0                   ; @ of VDB Status
+            AND.B   #0,(A0)                 ; Clear status byte of VDB
             
             MOVEM.L (A7)+,D0-D7/A0-A1       ; Restore content resgiters
             
