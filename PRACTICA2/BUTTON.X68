@@ -44,10 +44,10 @@ BTNINIT
             MOVEM.L D0-D7/A0-A1,-(A7)       ; Save content registers
             
             MOVE.L  A1,(A0)                 ; Copy SDB pointer into VDB
-*            AND.B   #0,4(A0)                
+            AND.B   #0,4(A0)                
 ; Creo que se puede hacer esto(linea de arriba)en vez de lo de abajo
-            ADDQ.B  #4,A0                   ; @ of VDB Status
-            AND.B   #0,(A0)                 ; Clear status byte of VDB
+*            ADDQ.B  #4,A0                   ; @ of VDB Status
+*            AND.B   #0,(A0)                 ; Clear status byte of VDB
             
             MOVEM.L (A7)+,D0-D7/A0-A1       ; Restore content resgiters
             
@@ -61,9 +61,13 @@ BTNUPD
 ; MODIFIES : NONE
 ; -----------------------------------------------------------------------------
 
+;000, 001, 010, 011 =I=0
+;100 I=1, P=0 THEN C=0
+;101 I=1, P=0 THEN C=0 
+;110 I=1, P=1, C=0 
+;111 I=1, P=1, C=1 
             MOVEM.L D0-D7/A0-A6,-(A7)       ; Save content registers
             
-            MOVE.L  (A0),A1                 ; COPY @ SDB OF BUTTON
             
             
             MOVEM.L (A7)+,D0-D7/A0-A6       ; Restore content resgiters
@@ -108,7 +112,8 @@ BTNPLOT
             TRAP    #15
             BRA     .SALIR
               
-.MOUPRESIONADO            
+.MOUPRESIONADO            
+
             ;Mouse presionando rectangulo
             MOVE.L  #BTNPRSCL,D1
             MOVE.W  #81,D0
@@ -117,23 +122,22 @@ BTNPLOT
             
 .MOUFUERA
             ;Mouse fuera del rectangulo            
-            MOVE.L  #0,D1
+            MOVE.L  #CLRBLACK,D1
             MOVE.W  #81,D0
             TRAP    #15
             
 .SALIR      
-    
-            MOVE.L  (A0),A2                 ; COPY @ SDB OF BUTTON
+            MOVE.L  (A0),A1                 ; COPY @ SDB OF BUTTON
             
             ; GET COORDINATES(UP)
-            MOVE.W  (A2)+,D2                ; UPPER Y
-            MOVE.W  (A2)+,D1                ; LEFT X
+            MOVE.W  (A1)+,D2                ; UPPER Y
+            MOVE.W  (A1)+,D1                ; LEFT X
             
             ; GET HEIGHT
-            MOVE.W  (A2)+,D4
+            MOVE.W  (A1)+,D4
             
             ; GET WIDTH 
-            MOVE.W  (A2)+,D3
+            MOVE.W  (A1)+,D3
 
             ; GET COORDINATES(LOW)
             ADD.W   D1,D3                   ; RIGHT X
@@ -149,7 +153,7 @@ BTNPLOT
             TRAP    #15
             
             ; GET TEXT
-            MOVE.B  12(A2),A1
+            ADD.W   #6,A1
  
             ; DRAW TEXT
             ; D1 & D2 SON LAS MISMAS QUE EL BOTON LEFTX Y UPPER Y
@@ -163,6 +167,14 @@ BTNPLOT
             
             
             
+
+
+
+
+
+
+
+
 
 
 
