@@ -97,7 +97,7 @@ BTLUPD
 
 ; -----------------------------------------------------------------------------
 BTLPLOT
-; CALLS BTNUPD FOR ALL THE BUTTONS IN THE BUTTON LIST.
+; CALLS BTNPLOT FOR ALL THE BUTTONS IN THE BUTTON LIST.
 ; INPUT    : NONE
 ; OUTPUT   : NONE
 ; MODIFIES : NONE
@@ -113,7 +113,7 @@ BTLPLOT
 .LOOP       CMP.L   #$FFFFFFFF,(A0)         ; Until end of list
             BEQ     .DONE
 
-            JSR     BTNUPD                  ; Calls BTNUPD
+            JSR     BTNPLOT                 ; Calls BTNUPD
 
             ADD.L   #BTNSZVDB,A0            ; Next button
             DBRA.W  D0,.LOOP
@@ -123,6 +123,7 @@ BTLPLOT
             RTS
 
             
+
 
 
 
