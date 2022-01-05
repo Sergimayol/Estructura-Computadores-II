@@ -59,7 +59,11 @@ GRDMUPD
 ; TODO : PLACE YOUR CODE HERE
 
 
+            MOVEM.L D0-D7/A0-A6,-(A7)
 
+
+            MOVEM.L (A7)+,D0-D7/A0-A6       
+            RTS
 
 
 
@@ -104,9 +108,11 @@ GRDRUPD
 
 ; TODO : PLACE YOUR CODE HERE
 
+            MOVEM.L D0-D7/A0-A6,-(A7)
 
 
-
+            MOVEM.L (A7)+,D0-D7/A0-A6       
+            RTS
 
 
 
@@ -234,7 +240,11 @@ GRDLLEFT
 ; TODO : PLACE YOUR CODE HERE
 
 
+            MOVEM.L D0-D7/A0-A6,-(A7)
 
+
+            MOVEM.L (A7)+,D0-D7/A0-A6       
+            RTS
 
 
 
@@ -258,7 +268,11 @@ GRDLRGT
 
 ; TODO : PLACE YOUR CODE HERE
 
+            MOVEM.L D0-D7/A0-A6,-(A7)
 
+
+            MOVEM.L (A7)+,D0-D7/A0-A6       
+            RTS
 
 
 
@@ -278,6 +292,54 @@ GRDPLOT
 
 ; TODO : PLACE YOUR CODE HERE
 
+            MOVEM.L D0-D7/A0-A6,-(A7)       ; SAVE CONTENT REGISTERS
+            
+            ; SET PEN COLOR
+            MOVE.B  #80,D0
+            MOVE.L  #CLRDKGRN,D1
+            TRAP    #15
+            
+            ; SET PEN WIDTH/THICKNESS
+            MOVE.B  #93,D0
+            MOVE.L  #?,D1
+            TRAP    #15
+            
+* GRDPXWID  ; GRID DISPLAY WIDTH (PIXELS)           
+* GRDPXHEI  ; GRID DISPLAY HEIGHT(PIXELS)
+* GRDSZCEL  ; GRID CELL SIZE (PIXELS)
+* GRDSZCEL    = GRDPXWID/GRDWIDTH    
+* NUMCOLUMNAS = GRDSZCEL/GRDPXWID
+* NUMFILAS    = GRDSZCEL/GRDPXHEI
+* NUMCELTOTAL = NUMCOLUMNAS*NUMFILAS          
+            
+            
+            MOVE.W  #.NUMCLS-1,D7
+            ; PAINT EACH CELL
+.LOOP                                       
+            ;Pintar un cuadrado
+            CMP     ?,?                     ; IF
+            
+            ; SET COORDINATES
+            
+            ; SET FILL COLOR || DEPENDE DE QUE JUGADOR SEA Y SI ESTA PULSADO O NO
+            MOVE.L  #?,D1
+            MOVE.W  #81,D0
+            TRAP    #15
+            
+            ; DRAW CELL
+            MOVE.B  #87,D0
+            TRAP    #15
+            
+            DBRA.W  D7,.LOOP
+                      
+            MOVEM.L (A7)+,D0-D7/A0-A6  
+     
+            RTS
+
+            ; LOCAL VARIABLES       
+.NUMCOL     DC.W    GRDSZCEL/GRDPXWID        
+.NUMROW     DC.W    GRDSZCEL/GRDPXHEI
+.NUMCLS     DC.W    .NUMCOL*.NUMROW
 
 
 
@@ -288,3 +350,26 @@ GRDPLOT
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*~Font name~Courier New~
+*~Font size~14~
+*~Tab type~0~
+*~Tab size~4~
