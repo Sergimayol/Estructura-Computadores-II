@@ -44,10 +44,7 @@ BTNINIT
             MOVEM.L D0-D7/A0-A1,-(A7)       ; Save content registers
             
             MOVE.L  A1,(A0)                 ; Copy SDB pointer into VDB
-            AND.B   #0,4(A0)                
-; Creo que se puede hacer esto(linea de arriba)en vez de lo de abajo
-*            ADDQ.B  #4,A0                   ; @ of VDB Status
-*            AND.B   #0,(A0)                 ; Clear status byte of VDB
+            AND.B   #0,4(A0)                ; CLEAR STATUS BYTE(VDB)                
             
             MOVEM.L (A7)+,D0-D7/A0-A1       ; Restore content resgiters
             
@@ -61,11 +58,6 @@ BTNUPD
 ; MODIFIES : NONE
 ; -----------------------------------------------------------------------------
 
-;000, 001, 010, 011 =I=0
-;100 I=1, P=0 THEN C=0
-;101 I=1, P=0 THEN C=0 
-;110 I=1, P=1, C=0 
-;111 I=1, P=1, C=1 
             MOVEM.L D0-D7/A0-A6,-(A7)       ; Save content registers
             
             
@@ -85,7 +77,7 @@ BTNPLOT
 ; MODIFIES : NONE
 ; -----------------------------------------------------------------------------
 
-            MOVEM.L D0-D4/A0-A1,-(A7)       ; Save content registers
+            MOVEM.L D0-D5/A0-A1,-(A7)       ; Save content registers
             
             ; SET PEN COLOR
             MOVE.B  #80,D0
@@ -108,7 +100,7 @@ BTNPLOT
     
             ;Mouse encima del rectangulo   
             MOVE.L  #BTNSELCL,D1
-            MOVE.W  #81,D0
+            MOVE.B  #81,D0
             TRAP    #15
             BRA     .SALIR
               
@@ -116,18 +108,19 @@ BTNPLOT
 
             ;Mouse presionando rectangulo
             MOVE.L  #BTNPRSCL,D1
-            MOVE.W  #81,D0
+            MOVE.B  #81,D0
             TRAP    #15
             BRA     .SALIR
             
 .MOUFUERA
             ;Mouse fuera del rectangulo            
             MOVE.L  #CLRBLACK,D1
-            MOVE.W  #81,D0
+            MOVE.B  #81,D0
             TRAP    #15
             
 .SALIR      
             MOVE.L  (A0),A1                 ; COPY @ SDB OF BUTTON
+            CLR.L   D1
             
             ; GET COORDINATES(UP)
             MOVE.W  (A1)+,D2                ; UPPER Y
@@ -141,44 +134,36 @@ BTNPLOT
 
             ; GET COORDINATES(LOW)
             ADD.W   D1,D3                   ; RIGHT X
-            SUB.W   D3,D4                   ; LOWER Y
-
+            MOVE.W  D2,D5                   
+            SUB.W   D4,D5                   ; LOWER Y
+            MOVE.W  D5,D4 
+            
             ; DRAW BUTTON
             MOVE.B  #87,D0
             TRAP    #15
-
+            
             ; SET PEN COLOR
+            MOVE.W  D1,D5                   ; SAVE D1 CONTENT
             MOVE.B  #80,D0
             MOVE.L  #CLRWHITE,D1
             TRAP    #15
+            CLR.L   D1
+            MOVE.W  D5,D1                   ; RESTORE D1
             
-            ; GET TEXT
-            ADD.W   #6,A1
- 
-            ; DRAW TEXT
-            ; D1 & D2 SON LAS MISMAS QUE EL BOTON LEFTX Y UPPER Y
-            MOVE.B  #95,D0
-            TRAP    #15
+*            ; GET & DRAW TEXT
+*            ADD.W   #4,A1
+*            
+*            Hay que realizar los calculos para X e Y   
+*            
+*            MOVE.W  ?,D1                    ; LEFTX +(WIDTH -TEXTWIDTH )/2
+*            MOVE.W  ?,D2                    ; UPPERY+(HEIGHT-TEXTHEIGHT)/2
+*            MOVE.B  #95,D0
+*            TRAP    #15
 
-            MOVEM.L (A7)+,D0-D4/A0-A1       ; Restore content resgiters
+            MOVEM.L (A7)+,D0-D5/A0-A1       ; Restore content resgiters
             
             RTS
-            
-            
-            
-            
-
-
-
-
-
-
-
-
-
-
-
-
+                    
 *~Font name~Courier New~
 *~Font size~14~
 *~Tab type~0~
