@@ -104,6 +104,25 @@ BTLPLOT
 ; -----------------------------------------------------------------------------
 
 ; TODO : PLACE YOUR CODE HERE
+            ; JSR BTLUPD
+            ; RTS
+            MOVEM.L A0/D0,-(A7)             ; Save content registers
+            
+            LEA     BTLDATA,A0              ; @ OF THE BUTTONS
+            MOVE.W  #BTLMXVDB-1,D0
+.LOOP       CMP.L   #$FFFFFFFF,(A0)         ; Until end of list
+            BEQ     .DONE
+
+            JSR     BTNUPD                  ; Calls BTNUPD
+
+            ADD.L   #BTNSZVDB,A0            ; Next button
+            DBRA.W  D0,.LOOP
+            
+.DONE       MOVEM.L (A7)+,A0/D0             ; Restore content resgiters
+            
+            RTS
+
+            
 
 
 
@@ -112,5 +131,7 @@ BTLPLOT
 
 
 
-
-
+*~Font name~Courier New~
+*~Font size~14~
+*~Tab type~0~
+*~Tab size~4~

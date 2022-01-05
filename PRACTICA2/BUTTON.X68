@@ -41,11 +41,15 @@ BTNINIT
 ; MODIFIES : NONE
 ; -----------------------------------------------------------------------------
 
-            MOVEM.L D0-D7/A0-A6,-(A7)       ; Save content registers
+            MOVEM.L D0-D7/A0-A1,-(A7)       ; Save content registers
             
+            MOVE.L  A1,(A0)                 ; Copy SDB pointer into VDB
+*            AND.B   #0,4(A0)                
+; Creo que se puede hacer esto(linea de arriba)en vez de lo de abajo
+            ADDQ.B  #4,A0                   ; @ of VDB Status
+            AND.B   #0,(A0)                 ; Clear status byte of VDB
             
-            
-            MOVEM.L (A7)+,D0-D7/A0-A6       ; Restore content resgiters
+            MOVEM.L (A7)+,D0-D7/A0-A1       ; Restore content resgiters
             
             RTS
 
@@ -59,6 +63,7 @@ BTNUPD
 
             MOVEM.L D0-D7/A0-A6,-(A7)       ; Save content registers
             
+            MOVE.L  (A0),A1                 ; COPY @ SDB OF BUTTON
             
             
             MOVEM.L (A7)+,D0-D7/A0-A6       ; Restore content resgiters
@@ -76,17 +81,107 @@ BTNPLOT
 ; MODIFIES : NONE
 ; -----------------------------------------------------------------------------
 
-            MOVEM.L D0-D7/A0-A6,-(A7)       ; Save content registers
+            MOVEM.L D0-D4/A0-A1,-(A7)       ; Save content registers
+            
+            ; SET PEN COLOR
+            MOVE.B  #80,D0
+            MOVE.L  #BTNPENCL,D1
+            TRAP    #15
+            
+            ; SET PEN WIDTH/THICKNESS
+            MOVE.B  #93,D0
+            MOVE.L  #BTNPENWD,D1
+            TRAP    #15
+            
+            ; Cambio de colores de los rectangulos
+*            ADDA    #4,A0
+            CMP.B   #0,4(A0)
+            BEQ     .MOUFUERA
+    
+*            BTST.B  #1,4(A0)
+            CMP.B   #2,4(A0) ;Creo que tendría que ser tambíen si ha sido pulsado
+*           CMP.B   #2||6,4(A0) 
+            BNE     .MOUPRESIONADO ; Creo que no hace falta mirar realmente esto
+            ; pq siempre que se haga click estará dentro por lo que con hacer que
+            ; si esta encima se dibuje basta
+    
+            ;Mouse encima del rectangulo   
+            MOVE.L  BTNSELCL,D1
+            MOVE.W  #81,D0
+            TRAP    #15
+            BRA     .SALIR
+              
+.MOUPRESIONADO            
+            ;Mouse presionando rectangulo
+            MOVE.L  BTNPRSCL,D1
+            MOVE.W  #81,D0
+            TRAP    #15
+            BRA     .SALIR
+            
+.MOUFUERA
+            ;Mouse fuera del rectangulo            
+            MOVE.L  #0,D1
+            MOVE.W  #81,D0
+            TRAP    #15
+*            BRA     .SALIR ; No hace falta este salto
+
+.SALIR      
+*            ;A0 apunta al inicio de VDB
+*            SUBA    #4,A0
+*            MOVE.L  (A0),A1
+    
+            MOVE.L  (A0),A2                 ; COPY @ SDB OF BUTTON
+            
+            ; GET COORDINATES(UP)
+            MOVE.W  (A2)+,D2                ; UPPER Y
+            MOVE.W  (A2)+,D1                ; LEFT X
+            
+            ; GET HEIGHT
+            MOVE.W  (A2)+,D4
+            
+            ; GET WIDTH 
+            MOVE.W  (A2)+,D3
+
+            ; GET COORDINATES(LOW)
+            ADD.W   D1,D3                   ; RIGHT X
+            SUB.W   D3,D4                   ; LOWER Y
+            
+*            MOVE.W  D1,D3    
+*            MOVE.W  D2,D4    
+*            ADD.W   (A1)+,D4                ; LOWER Y
+*            ADD.W   (A1)+,D3                ; RIGHT X
+
+            ; DRAW BUTTON
+            MOVE.B  #87,D0
+            TRAP    #15
+            
+            ; GET TEXT
+            MOVE.B  12(A2),A1               
+            
+            ; SET PEN COLOR
+            MOVE.B  #80,D0
+            MOVE.L  #CLRWHITE,D1
+            TRAP    #15
+            
+            ; DRAW TEXT
+            MOVE.W  ??x,D1                    ; 'x' e 'y' hay que calcular para que el 
+            MOVE.W  ??y,D2                    ; texto este en el centro del boton
+            MOVE.B  #95,D0
+            TRAP    #15
             
             
             
-            MOVEM.L (A7)+,D0-D7/A0-A6       ; Restore content resgiters
+            MOVEM.L (A7)+,D0-D4/A0-A1       ; Restore content resgiters
             
             RTS
             
             
             
             
+
+
+
+
 *~Font name~Courier New~
 *~Font size~14~
 *~Tab type~0~
