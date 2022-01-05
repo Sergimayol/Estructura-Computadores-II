@@ -94,26 +94,23 @@ BTNPLOT
             TRAP    #15
             
             ; Cambio de colores de los rectangulos
-*            ADDA    #4,A0
             CMP.B   #0,4(A0)
             BEQ     .MOUFUERA
     
 *            BTST.B  #1,4(A0)
             CMP.B   #2,4(A0) ;Creo que tendría que ser tambíen si ha sido pulsado
 *           CMP.B   #2||6,4(A0) 
-            BNE     .MOUPRESIONADO ; Creo que no hace falta mirar realmente esto
-            ; pq siempre que se haga click estará dentro por lo que con hacer que
-            ; si esta encima se dibuje basta
+            BNE     .MOUPRESIONADO 
     
             ;Mouse encima del rectangulo   
-            MOVE.L  BTNSELCL,D1
+            MOVE.L  #BTNSELCL,D1
             MOVE.W  #81,D0
             TRAP    #15
             BRA     .SALIR
               
-.MOUPRESIONADO            
+.MOUPRESIONADO            
             ;Mouse presionando rectangulo
-            MOVE.L  BTNPRSCL,D1
+            MOVE.L  #BTNPRSCL,D1
             MOVE.W  #81,D0
             TRAP    #15
             BRA     .SALIR
@@ -123,12 +120,8 @@ BTNPLOT
             MOVE.L  #0,D1
             MOVE.W  #81,D0
             TRAP    #15
-*            BRA     .SALIR ; No hace falta este salto
-
+            
 .SALIR      
-*            ;A0 apunta al inicio de VDB
-*            SUBA    #4,A0
-*            MOVE.L  (A0),A1
     
             MOVE.L  (A0),A2                 ; COPY @ SDB OF BUTTON
             
@@ -145,32 +138,24 @@ BTNPLOT
             ; GET COORDINATES(LOW)
             ADD.W   D1,D3                   ; RIGHT X
             SUB.W   D3,D4                   ; LOWER Y
-            
-*            MOVE.W  D1,D3    
-*            MOVE.W  D2,D4    
-*            ADD.W   (A1)+,D4                ; LOWER Y
-*            ADD.W   (A1)+,D3                ; RIGHT X
 
             ; DRAW BUTTON
             MOVE.B  #87,D0
             TRAP    #15
-            
-            ; GET TEXT
-            MOVE.B  12(A2),A1               
-            
+
             ; SET PEN COLOR
             MOVE.B  #80,D0
             MOVE.L  #CLRWHITE,D1
             TRAP    #15
             
+            ; GET TEXT
+            MOVE.B  12(A2),A1
+ 
             ; DRAW TEXT
-            MOVE.W  ??x,D1                    ; 'x' e 'y' hay que calcular para que el 
-            MOVE.W  ??y,D2                    ; texto este en el centro del boton
+            ; D1 & D2 SON LAS MISMAS QUE EL BOTON LEFTX Y UPPER Y
             MOVE.B  #95,D0
             TRAP    #15
-            
-            
-            
+
             MOVEM.L (A7)+,D0-D4/A0-A1       ; Restore content resgiters
             
             RTS
