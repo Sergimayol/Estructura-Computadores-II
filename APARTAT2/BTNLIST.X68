@@ -97,29 +97,34 @@ BTLUPD
 
 ; -----------------------------------------------------------------------------
 BTLPLOT
-; CALLS BTNUPD FOR ALL THE BUTTONS IN THE BUTTON LIST.
+; CALLS BTNPLOT FOR ALL THE BUTTONS IN THE BUTTON LIST.
 ; INPUT    : NONE
 ; OUTPUT   : NONE
 ; MODIFIES : NONE
 ; -----------------------------------------------------------------------------
 
 ; TODO : PLACE YOUR CODE HERE
-
-            MOVEM.L D0-D7/A0-A6,-(A7)       ; Save content registers
+            ; JSR BTLUPD
+            ; RTS
+            MOVEM.L A0/D0,-(A7)             ; Save content registers
             
+            LEA     BTLDATA,A0              ; @ OF THE BUTTONS
+            MOVE.W  #BTLMXVDB-1,D0
 .LOOP       CMP.L   #$FFFFFFFF,(A0)         ; Until end of list
             BEQ     .DONE
 
-            JSR     BTNUPD                  ; Calls BTNUPD
+            JSR     BTNPLOT                 ; Calls BTNUPD
 
             ADD.L   #BTNSZVDB,A0            ; Next button
             DBRA.W  D0,.LOOP
             
-.DONE       MOVEM.L (A7)+,D0-D7/A0-A6       ; Restore content resgiters
+.DONE       MOVEM.L (A7)+,A0/D0             ; Restore content resgiters
             
             RTS
 
             
+
+
 
 
 
