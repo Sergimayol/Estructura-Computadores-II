@@ -58,47 +58,47 @@ BTNUPD
 ; MODIFIES : NONE
 ; -----------------------------------------------------------------------------
 
-            MOVEM.L D0-D7/A0-A6,-(A7)       ; Save content registers
+*            MOVEM.L D0-D7/A0-A6,-(A7)       ; Save content registers
             
             ;Creo que hay que mirar donde se encuentra el ratón, y dependiendo
             ; de donde este actualizar correspodientemente los 3 bits del VDB
             ; Pseudocódigo de lo que (creo que) hay hacer:
 *            if(mousedentro){
-            CMP     #$?,?
-            BNE     .MOUSEOUT
-*               I (BIT 0) = 1
-            OR.W    #$0001,4(A0)
-            CMP     #$?,?
-            BEQ     .MOUSECLCK
-*               if(!mouseclicked){
-*                    C (BIT 2) = 0
-            AND.W   #$FFFB,4(A0)
-*               }else{
-.MOUSECLCK
-*                    C (BIT 2) = 1
-            OR.W    #$0004,4(A0)
-*               }
-            CMP     #$?,?
-            BEQ     .MOUSEPRSS
-*               if(!mousepressed){
-*                    P (BIT 1) = 0
-            AND.W   #$FFFD,4(A0)
-            BRA     .END
-*               }else{
-.MOUSEPRSS
-*                    P (BIT 1) = 1
-            OR.W    #$0002,4(A0)
-            BRA     .END
-*               }
-*            } else {
-.MOUSEOUT
-*              I (BIT 0) = 0
-*              P (BIT 1) = 0
-*              C (BIT 2) = 0
-            AND.W   #$FFF8,4(A0)
-*            }
-.END        MOVEM.L (A7)+,D0-D7/A0-A6       ; Restore content resgiters
-            
+*            CMP     #$?,?
+*            BNE     .MOUSEOUT
+**               I (BIT 0) = 1
+*            OR.W    #$0001,4(A0)
+*            CMP     #$?,?
+*            BEQ     .MOUSECLCK
+**               if(!mouseclicked){
+**                    C (BIT 2) = 0
+*            AND.W   #$FFFB,4(A0)
+**               }else{
+*.MOUSECLCK
+**                    C (BIT 2) = 1
+*            OR.W    #$0004,4(A0)
+**               }
+*            CMP     #$?,?
+*            BEQ     .MOUSEPRSS
+**               if(!mousepressed){
+**                    P (BIT 1) = 0
+*            AND.W   #$FFFD,4(A0)
+*            BRA     .END
+**               }else{
+*.MOUSEPRSS
+**                    P (BIT 1) = 1
+*            OR.W    #$0002,4(A0)
+*            BRA     .END
+**               }
+**            } else {
+*.MOUSEOUT
+**              I (BIT 0) = 0
+**              P (BIT 1) = 0
+**              C (BIT 2) = 0
+*            AND.W   #$FFF8,4(A0)
+**            }
+*.END        MOVEM.L (A7)+,D0-D7/A0-A6       ; Restore content resgiters
+*            
             RTS
 
 ; -----------------------------------------------------------------------------
@@ -163,9 +163,11 @@ BTNPLOT
             
             ; GET HEIGHT
             MOVE.W  (A1)+,D4
+            MOVE.W  D4,-(A7)
             
             ; GET WIDTH 
             MOVE.W  (A1)+,D3
+            MOVE.W  D3,D7
 
             ; GET COORDINATES(LOW)
             ADD.W   D1,D3                   ; RIGHT X
@@ -201,11 +203,12 @@ BTNPLOT
             MOVE.B  (A2)+,D6                
             BRA     .LOOP
 .DONE       MULU.W  #CHRWIDTH,D5
-            SUB.W   D5,D3                   ; WIDTH-TEXTWIDTH
-            DIVU.W  #2,D3                   ; (WIDTH-TEXTWIDTH)/2
-            ADD.W   D3,D1                   ; LEFTX +(WIDTH-TEXTWIDTH)/2
+            SUB.W   D5,D7                   ; WIDTH-TEXTWIDTH
+            DIVU.W  #2,D7                   ; (WIDTH-TEXTWIDTH)/2
+            ADD.W   D7,D1                   ; LEFTX +(WIDTH-TEXTWIDTH)/2
             ;ME FALLA OBTENER D1
 *            MOVE.W  4(A2),D4
+            MOVE.W  (A7)+,D4
             SUB.W   #CHRHEIGH,D4            ; HEIGHT-TEXTHEIGHT
             DIVU.W  #2,D4                   ; (HEIGHT-TEXTHEIGHT)/2
             ADD.W   D4,D2                   ; UPPERY+(HEIGHT-TEXTHEIGHT)/2
@@ -217,6 +220,8 @@ BTNPLOT
             
             RTS
                     
+
+
 
 
 *~Font name~Courier New~
