@@ -65,14 +65,6 @@ GRDMUPD
             MOVEM.L (A7)+,D0-D7/A0-A6       
             RTS
 
-
-
-
-
-
-
-
-
 ; -----------------------------------------------------------------------------
 GRDRUPD
 ; UPDATES THE GRID ACCORDING TO 2-PLAYER GAME OF LIFE RULES AS FOLLOWS:
@@ -113,13 +105,6 @@ GRDRUPD
 
             MOVEM.L (A7)+,D0-D7/A0-A6       
             RTS
-
-
-
-
-
-
-
 
 ; -----------------------------------------------------------------------------
 GRDSAVE
@@ -240,19 +225,33 @@ GRDLLEFT
 ; TODO : PLACE YOUR CODE HERE
 
 
-            MOVEM.L D0-D7/A0-A6,-(A7)
-
-
-            MOVEM.L (A7)+,D0-D7/A0-A6       
+            MOVEM.L D0-D7/A0-A6,-(A7)       ; SAVE CONTENT REGISTERS
+            
+            MOVE.B  #50,D0                  ; CLOSE ALL FILES
+            TRAP    #15
+            SUB.L   #512,A7                 ; ROW BUFFER IN LOCAL MEMORY
+            MOVE.B  #58,D0                  ; SHOW FILE DIALOG TASK
+            CLR.L   D1                      ; DISPLAY LOAD DIALOG
+            LEA     .MSG,A1                 ; STANDARD MESSAGE
+            LEA     .FILTER,A2              ; NO FILTER
+            MOVE.L  A7,A3                   ; FILE NAME BUFFER
+            CLR.W   (A3)                    ; ENSURE THERE IS NO STRING
+            TRAP    #15
+            TST.B   D1
+            BEQ     .END                    ; IF CANCELLED, DO NOTHING
+            MOVE.L  A3,A1                   ; PLACE THE FILENAME INTO A1
+            MOVE.B  #51,D0                  ; OPEN EXISTING FILE
+            TRAP    #15
+            TST.W   D0                      ; CHECK ERRORS
+            BNE     .END                    ; IF ERRORS, DO NOTHING MORE
+            
+.END        ADD.L   #512,A7                 ; RESTORE STACK
+            MOVEM.L (A7)+,D0-D7/A0-A6       ; RESTORES CONTENT REGISTERS
             RTS
 
-
-
-
-
-
-
-
+.MSG        DC.B    'SELECT A CSV FILE TO LOAD',0
+.FILTER     DC.B    '*.CSV',0
+            DS.W    0
 
 ; -----------------------------------------------------------------------------
 GRDLRGT
@@ -268,19 +267,18 @@ GRDLRGT
 
 ; TODO : PLACE YOUR CODE HERE
 
-            MOVEM.L D0-D7/A0-A6,-(A7)
+            MOVEM.L D0-D7/A0-A6,-(A7)       ; SAVE CONTENT REGISTERS
+            MOVE.B  #50,D0                  ; CLOSE ALL FILES 
+            TRAP    #15
 
-
-            MOVEM.L (A7)+,D0-D7/A0-A6       
+            
+            
+            MOVEM.L (A7)+,D0-D7/A0-A6       ; RESTORES CONTENT REGISTERS
             RTS
 
-
-
-
-
-
-
-
+.MSG        DC.B    'SELECT A CSV FILE TO LOAD',0
+.FILTER     DC.B    '*.CSV',0
+            DS.W    0
 
 ; -----------------------------------------------------------------------------
 GRDPLOT
@@ -304,12 +302,13 @@ GRDPLOT
             MOVE.L  #?,D1
             TRAP    #15
             
-* GRDPXWID  ; GRID DISPLAY WIDTH (PIXELS)           
-* GRDPXHEI  ; GRID DISPLAY HEIGHT(PIXELS)
-* GRDSZCEL  ; GRID CELL SIZE (PIXELS)
-* GRDSZCEL    = GRDPXWID/GRDWIDTH    
-* NUMCOLUMNAS = GRDSZCEL/GRDPXWID
-* NUMFILAS    = GRDSZCEL/GRDPXHEI
+* GRDPXWID   ; GRID DISPLAY WIDTH (PIXELS)           
+* GRDPXHEI   ; GRID DISPLAY HEIGHT(PIXELS)
+* GRDSZCEL   ; GRID CELL SIZE (PIXELS)
+* GRDWIDTH   ; NUMBER OF GRID COLUMNS
+* GRDHEIGH   ; NUMBER OF GRID ROWS
+* GRDHEIGH-1 ; NUMBER OF ROWS-1
+* GRDWIDTH-1 ; NUMBER OF COLUMNS-1
 * NUMCELTOTAL = NUMCOLUMNAS*NUMFILAS          
             
             
@@ -340,6 +339,7 @@ GRDPLOT
 .NUMCOL     DC.W    GRDSZCEL/GRDPXWID        
 .NUMROW     DC.W    GRDSZCEL/GRDPXHEI
 .NUMCLS     DC.W    .NUMCOL*.NUMROW
+
 
 
 
