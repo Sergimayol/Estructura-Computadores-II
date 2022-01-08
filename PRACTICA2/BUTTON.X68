@@ -140,7 +140,6 @@ BTNPLOT
             BRA     .SALIR
               
 .MOUPRESIONADO            
-
             ;Mouse presionando rectangulo
             MOVE.L  #BTNPRSCL,D1
             MOVE.B  #81,D0
@@ -189,15 +188,13 @@ BTNPLOT
             
             ; GET & DRAW TEXT
             ADD.W   #4,A1
-*            
-*            Hay que realizar los calculos para X e Y   
-                         ; TEXTWIDTH  = NUMCAR*CHRWIDTH ; CHARACTER WIDTH
-                         ; TEXTHEIGHT = CHRHEIGH        ; CHARACTER HEIGHT
+            ; TEXTWIDTH  = NUMCAR*CHRWIDTH ; CHARACTER WIDTH
+            ; TEXTHEIGHT = CHRHEIGH        ; CHARACTER HEIGHT
             CLR.L   D5
             MOVE.L  (A0),A2
             ADD.W   #12,A2
             MOVE.B  (A2)+,D6
-.LOOP       CMP     #0,D6            
+.LOOP       CMP     #0,D6                   ; GET TEXT LENGTH            
             BEQ     .DONE
             ADD.W   #1,D5
             MOVE.B  (A2)+,D6                
@@ -219,6 +216,7 @@ BTNPLOT
             
             RTS
                     
+
 
 
 
