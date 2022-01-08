@@ -51,14 +51,14 @@ MOUINIT
 ; MODIFIES - ALL REGISTERS CAN BE MODIFIED
 ; -----------------------------------------------------------------------------
 
-            MOVE.B #61, D0
-            MOVE.B #0, D1
-            TRAP #15
-            AND.L #7, D0
-            MOVE.B D0, MOUVAL
-            MOVE.W D1, MOUX
-            SWAP D1
-            MOVE.W D1, MOUY            
+            MOVE.B  #61, D0
+            MOVE.B  #0, D1
+            TRAP    #15
+            AND.L   #7, D0
+            MOVE.B  D0, MOUVAL
+            MOVE.W  D1, MOUX
+            SWAP    D1
+            MOVE.W  D1, MOUY            
             CLR.B   MOUEDGE                 ; clears MOUEDGE
             MOVE.L  #MOUREAD,($80+MOUTRAP*4) ;Installs mouread into moutrap
             
@@ -138,6 +138,7 @@ SCRUPD
             TRAP    #15
             MOVEM.W (A7)+,D0-D1
             RTE
+
 
 
 
