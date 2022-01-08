@@ -202,8 +202,9 @@ GOLSAVBT    DC.W    2*BTLVEMRG+BTLVERSZ     ; YTOP
             DC.W    SCRWIDTH/4-2*BTLHOMRG   ; WIDTH
 ; TODO: PLACE THE CALLBACK HERE
             DC.L    GRDSAVE                 ; CALLBACK (GRID.X68)
-            DC.B    'SAVE',0          ; TEXT
+            DC.B    'SAVE',0                ; TEXT
             DS.W    0
+
 *~Font name~Courier New~
 *~Font size~14~
 *~Tab type~0~
