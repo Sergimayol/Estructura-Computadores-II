@@ -112,7 +112,7 @@ BTNPLOT
 ; MODIFIES : NONE
 ; -----------------------------------------------------------------------------
 
-            MOVEM.L D0-D5/A0-A1,-(A7)       ; Save content registers
+            MOVEM.L D0-D7/A0-A2,-(A7)       ; Save content registers
             
             ; SET PEN COLOR
             MOVE.B  #80,D0
@@ -172,7 +172,7 @@ BTNPLOT
             ; GET COORDINATES(LOW)
             ADD.W   D1,D3                   ; RIGHT X
             MOVE.W  D2,D5                   
-            SUB.W   D4,D5                   ; LOWER Y
+            ADD.W   D4,D5                   ; LOWER Y
             MOVE.W  D5,D4 
             
             ; DRAW BUTTON
@@ -191,8 +191,8 @@ BTNPLOT
             ADD.W   #4,A1
 *            
 *            Hay que realizar los calculos para X e Y   
-*                         ; TEXTWIDTH  = NUMCAR*CHRWIDTH ; CHARACTER WIDTH
-                          ; TEXTHEIGHT = CHRHEIGH        ; CHARACTER HEIGHT
+                         ; TEXTWIDTH  = NUMCAR*CHRWIDTH ; CHARACTER WIDTH
+                         ; TEXTHEIGHT = CHRHEIGH        ; CHARACTER HEIGHT
             CLR.L   D5
             MOVE.L  (A0),A2
             ADD.W   #12,A2
@@ -206,8 +206,7 @@ BTNPLOT
             SUB.W   D5,D7                   ; WIDTH-TEXTWIDTH
             DIVU.W  #2,D7                   ; (WIDTH-TEXTWIDTH)/2
             ADD.W   D7,D1                   ; LEFTX +(WIDTH-TEXTWIDTH)/2
-            ;ME FALLA OBTENER D1
-*            MOVE.W  4(A2),D4
+
             MOVE.W  (A7)+,D4
             SUB.W   #CHRHEIGH,D4            ; HEIGHT-TEXTHEIGHT
             DIVU.W  #2,D4                   ; (HEIGHT-TEXTHEIGHT)/2
@@ -215,11 +214,14 @@ BTNPLOT
             
             MOVE.B  #95,D0
             TRAP    #15
-
-            MOVEM.L (A7)+,D0-D5/A0-A1       ; Restore content resgiters
+            
+            MOVEM.L (A7)+,D0-D7/A0-A2       ; Restore content resgiters
             
             RTS
                     
+
+
+
 
 
 
