@@ -57,48 +57,54 @@ BTNUPD
 ; OUTPUT   : NONE
 ; MODIFIES : NONE
 ; -----------------------------------------------------------------------------
-
-*            MOVEM.L D0-D7/A0-A6,-(A7)       ; Save content registers
             
-            ;Creo que hay que mirar donde se encuentra el ratón, y dependiendo
-            ; de donde este actualizar correspodientemente los 3 bits del VDB
-            ; Pseudocódigo de lo que (creo que) hay hacer:
-*            if(mousedentro){
-*            CMP     #$?,?
-*            BNE     .MOUSEOUT
-**               I (BIT 0) = 1
-*            OR.W    #$0001,4(A0)
-*            CMP     #$?,?
-*            BEQ     .MOUSECLCK
-**               if(!mouseclicked){
-**                    C (BIT 2) = 0
-*            AND.W   #$FFFB,4(A0)
-**               }else{
-*.MOUSECLCK
-**                    C (BIT 2) = 1
-*            OR.W    #$0004,4(A0)
-**               }
-*            CMP     #$?,?
-*            BEQ     .MOUSEPRSS
-**               if(!mousepressed){
-**                    P (BIT 1) = 0
-*            AND.W   #$FFFD,4(A0)
-*            BRA     .END
-**               }else{
-*.MOUSEPRSS
-**                    P (BIT 1) = 1
-*            OR.W    #$0002,4(A0)
-*            BRA     .END
-**               }
-**            } else {
-*.MOUSEOUT
-**              I (BIT 0) = 0
-**              P (BIT 1) = 0
-**              C (BIT 2) = 0
-*            AND.W   #$FFF8,4(A0)
-**            }
-*.END        MOVEM.L (A7)+,D0-D7/A0-A6       ; Restore content resgiters
-*            
+            MOVEM.L D0-D7/A0-A6,-(A7)       ; Save content registers
+            
+            MOVE.B   #0,4(A0)               ; CLEAR STATUS BYTE
+            MOVE.L  (A0),A1                 ; COPY @ SDB OF BUTTON
+            
+            ; COPY MOUSE POSITION
+            MOVE.W  MOUY,D0
+            MOVE.W  MOUX,D1
+            
+            ; GET BUTTON POSITION
+            MOVE.W  (A1)+,D2                ; TOP Y
+            MOVE.W  (A1)+,D3                ; LEFT X
+            MOVE.W  (A1)+,D4                ; HEIGHT
+            MOVE.W  (A1)+,D5                ; WIDTH  
+            
+            CMP.W   D2,D0
+            BLT     .MOUSEOUT
+            
+            CMP.W   D3,D1
+            BLT     .MOUSEOUT
+            
+            MOVE.W  D4,A2
+            ADD.W   D2,A2
+            CMP.W   A2,D0
+            BGT     .MOUSEOUT
+            
+            MOVE.W  D3,A2
+            ADD.W   D5,A2
+            CMP.W   A2,D0
+            BGT     .MOUSEOUT
+
+            MOVE.B  #1,4(A0)
+            BTST    #0,MOUVAL
+            BEQ     .END
+            MOVE.B  #3,4(A0)
+            BTST    #0,MOUEDGE 
+            BEQ     .END
+            MOVE.B  #7,4(A0)
+            
+            MOVE.L  (A1),A2
+            JSR     (A2)
+            BRA     .END            
+            
+.MOUSEOUT   CLR.B   4(A0)
+
+.END        MOVEM.L (A7)+,D0-D7/A0-A6       ; Restore content resgiters
+           
             RTS
 
 ; -----------------------------------------------------------------------------
@@ -216,6 +222,9 @@ BTNPLOT
             
             RTS
                     
+
+
+
 
 
 
