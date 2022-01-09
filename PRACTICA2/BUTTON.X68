@@ -44,8 +44,8 @@ BTNINIT
             MOVEM.L D0-D7/A0-A1,-(A7)       ; Save content registers
             
             MOVE.L  A1,(A0)                 ; Copy SDB pointer into VDB
-            AND.W   #0,4(A0)                ; CLEAR STATUS BYTE(VDB)                
-            ;No se si es AND.B
+            CLR.B   4(A0)                   ; CLEAR STATUS BYTE(VDB)                
+
             MOVEM.L (A7)+,D0-D7/A0-A1       ; Restore content resgiters
             
             RTS
@@ -57,48 +57,58 @@ BTNUPD
 ; OUTPUT   : NONE
 ; MODIFIES : NONE
 ; -----------------------------------------------------------------------------
-
-*            MOVEM.L D0-D7/A0-A6,-(A7)       ; Save content registers
             
-            ;Creo que hay que mirar donde se encuentra el ratón, y dependiendo
-            ; de donde este actualizar correspodientemente los 3 bits del VDB
-            ; Pseudocódigo de lo que (creo que) hay hacer:
-*            if(mousedentro){
-*            CMP     #$?,?
-*            BNE     .MOUSEOUT
-**               I (BIT 0) = 1
-*            OR.W    #$0001,4(A0)
-*            CMP     #$?,?
-*            BEQ     .MOUSECLCK
-**               if(!mouseclicked){
-**                    C (BIT 2) = 0
-*            AND.W   #$FFFB,4(A0)
-**               }else{
-*.MOUSECLCK
-**                    C (BIT 2) = 1
-*            OR.W    #$0004,4(A0)
-**               }
-*            CMP     #$?,?
-*            BEQ     .MOUSEPRSS
-**               if(!mousepressed){
-**                    P (BIT 1) = 0
-*            AND.W   #$FFFD,4(A0)
-*            BRA     .END
-**               }else{
-*.MOUSEPRSS
-**                    P (BIT 1) = 1
-*            OR.W    #$0002,4(A0)
-*            BRA     .END
-**               }
-**            } else {
-*.MOUSEOUT
-**              I (BIT 0) = 0
-**              P (BIT 1) = 0
-**              C (BIT 2) = 0
-*            AND.W   #$FFF8,4(A0)
-**            }
-*.END        MOVEM.L (A7)+,D0-D7/A0-A6       ; Restore content resgiters
-*            
+            MOVEM.L D0-D5/A0-A2,-(A7)       ; Save content registers
+            
+            MOVE.B   #0,4(A0)               ; CLEAR STATUS BYTE
+            MOVE.L  (A0),A1                 ; COPY @ SDB OF BUTTON
+            
+            ; COPY MOUSE POSITION
+            MOVE.W  MOUY,D0                 ; COPY MOUSE Y POSITION
+            MOVE.W  MOUX,D1                 ; COPY MOUSE X POSITION
+            
+            ; GET BUTTON POSITION
+            MOVE.W  (A1)+,D2                ; TOP Y
+            MOVE.W  (A1)+,D3                ; LEFT X
+            MOVE.W  (A1)+,D4                ; HEIGHT
+            MOVE.W  (A1)+,D5                ; WIDTH  
+            
+            ; IF D2<D0 MOUSE NOT INSIDE (IS UPPER THAN THE BUTTON)
+            CMP.W   D2,D0
+            BLT     .MOUSEOUT
+            
+            ; IF D3<D1 MOUSE NOT INSIDE (IS ON THE LEFT SIDE)
+            CMP.W   D3,D1
+            BLT     .MOUSEOUT
+            
+            ; IF D4>D0 MOUSE NOT INSIDE (IS LOWER THAN THE BUTTON)
+            ADD.W   D2,D4
+            CMP.W   D4,D0
+            BGT     .MOUSEOUT
+            
+            ; IF D5>D0 MOUSE NOT INSIDE (IS ON THE RIGHT SIDE)
+            ADD.W   D3,D5
+            CMP.W   D5,D1
+            BGT     .MOUSEOUT
+
+            ; UPDATE VDB 
+            MOVE.B  #1,4(A0)                ; I (BIT 0) = 1
+            BTST    #0,MOUVAL               ; BUTTON NOT PRESSED?
+            BEQ     .END                    ; BUTTON NOT PRESSED
+            MOVE.B  #3,4(A0)                ; P (BIT 1) = 1
+            BTST    #0,MOUEDGE              ; BUTTON NOT CLICKED?
+            BEQ     .END                    ; BUTTON NOT CLICKED
+            MOVE.B  #7,4(A0)                ; C (BIT 2) = 1
+            
+            ; EXECUTE CALLBACK
+            MOVE.L  (A1),A2                 ; COPY @ CALLBACK
+            JSR     (A2)                    ; JUMP TO CALLBACK SUBR
+            BRA     .END                    
+            
+.MOUSEOUT   CLR.B   4(A0)                   ; I,P,C = 0
+
+.END        MOVEM.L (A7)+,D0-D5/A0-A2       ; Restore content resgiters
+           
             RTS
 
 ; -----------------------------------------------------------------------------
@@ -216,6 +226,11 @@ BTNPLOT
             
             RTS
                     
+
+
+
+
+
 
 
 
