@@ -57,60 +57,58 @@ BTNUPD
 ; OUTPUT   : NONE
 ; MODIFIES : NONE
 ; -----------------------------------------------------------------------------
-
-            MOVEM.L D0-D7/A0-A6,-(A7)       ; Save content registers
             
-            MOVE.B   #0,4(A0)                ; CLEAR STATUS BYTE
+            MOVEM.L D0-D5/A0-A2,-(A7)       ; Save content registers
+            
+            MOVE.B   #0,4(A0)               ; CLEAR STATUS BYTE
             MOVE.L  (A0),A1                 ; COPY @ SDB OF BUTTON
             
             ; COPY MOUSE POSITION
-            MOVE.W  MOUY,D0
-            MOVE.W  MOUX,D1
-                 
+            MOVE.W  MOUY,D0                 ; COPY MOUSE Y POSITION
+            MOVE.W  MOUX,D1                 ; COPY MOUSE X POSITION
+            
             ; GET BUTTON POSITION
             MOVE.W  (A1)+,D2                ; TOP Y
             MOVE.W  (A1)+,D3                ; LEFT X
             MOVE.W  (A1)+,D4                ; HEIGHT
-            MOVE.W  (A1)+,D5                ; WIDTH
+            MOVE.W  (A1)+,D5                ; WIDTH  
             
+            ; IF D2<D0 MOUSE NOT INSIDE (IS UPPER THAN THE BUTTON)
             CMP.W   D2,D0
-            BGT     .CHECKLEFTX
-            BRA     .RT
+            BLT     .MOUSEOUT
             
-.CHECKLEFTX CMP.W   D3,D1
-            BGT     .CHECKLWY
-            BRA     .RT
-          
-.CHECKLWY   MOVE.W  D4,A2
-            ADD.W   D2,A2
-            CMP.W   A2,D0
-            BLT     .CHECKRTX
-            BRA     .RT
+            ; IF D3<D1 MOUSE NOT INSIDE (IS ON THE LEFT SIDE)
+            CMP.W   D3,D1
+            BLT     .MOUSEOUT
             
-.CHECKRTX   MOVE.W  D3,A2
-            ADD.W   D5,A2
-            CMP.W   A2,D0
-            BLT     .UPTI
-            BRA     .CLEARSTUS
-
-.UPTI       MOVE.B  #1,4(A0)
-            BTST    #0,MOUVAL
-            BEQ     .RT
-            MOVE.B  #3,4(A0)
-            BTST    #0,MOUEDGE 
-            BEQ     .RT
-            MOVE.B  #7,4(A0)
-            BRA     .CALLBACK
-
-.CLEARSTUS  CLR.B   4(A0)
-            BRA     .RT
-
-.CALLBACK   MOVE.L  (A1),A2
-            JSR     (A2)
-            BRA     .RT           
+            ; IF D4>D0 MOUSE NOT INSIDE (IS LOWER THAN THE BUTTON)
+            ADD.W   D2,D4
+            CMP.W   D4,D0
+            BGT     .MOUSEOUT
             
-.RT         MOVEM.L (A7)+,D0-D7/A0-A6       ; Restore content resgiters
+            ; IF D5>D0 MOUSE NOT INSIDE (IS ON THE RIGHT SIDE)
+            ADD.W   D3,D5
+            CMP.W   D5,D1
+            BGT     .MOUSEOUT
 
+            ; UPDATE VDB 
+            MOVE.B  #1,4(A0)                ; I (BIT 0) = 1
+            BTST    #0,MOUVAL               ; BUTTON NOT PRESSED?
+            BEQ     .END                    ; BUTTON NOT PRESSED
+            MOVE.B  #3,4(A0)                ; P (BIT 1) = 1
+            BTST    #0,MOUEDGE              ; BUTTON NOT CLICKED?
+            BEQ     .END                    ; BUTTON NOT CLICKED
+            MOVE.B  #7,4(A0)                ; C (BIT 2) = 1
+            
+            ; EXECUTE CALLBACK
+            MOVE.L  (A1),A2                 ; COPY @ CALLBACK
+            JSR     (A2)                    ; JUMP TO CALLBACK SUBR
+            BRA     .END                    
+            
+.MOUSEOUT   CLR.B   4(A0)                   ; I,P,C = 0
+
+.END        MOVEM.L (A7)+,D0-D5/A0-A2       ; Restore content resgiters
+           
             RTS
 
 ; -----------------------------------------------------------------------------
@@ -139,8 +137,11 @@ BTNPLOT
             ; Cambio de colores de los rectangulos
             CMP.B   #0,4(A0)
             BEQ     .MOUFUERA
-            BTST.B  #1,(A0)
-            BEQ     .MOUPRESIONADO 
+    
+*            BTST.B  #1,4(A0)
+            CMP.B   #2,4(A0) ;Creo que tendría que ser tambíen si ha sido pulsado
+*           CMP.B   #2||6,4(A0) 
+            BNE     .MOUPRESIONADO 
     
             ;Mouse encima del rectangulo   
             MOVE.L  #BTNSELCL,D1
@@ -225,7 +226,6 @@ BTNPLOT
             
             RTS
                     
-
 
 
 
