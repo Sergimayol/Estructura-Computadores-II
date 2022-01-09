@@ -44,8 +44,8 @@ BTNINIT
             MOVEM.L D0-D7/A0-A1,-(A7)       ; Save content registers
             
             MOVE.L  A1,(A0)                 ; Copy SDB pointer into VDB
-            AND.W   #0,4(A0)                ; CLEAR STATUS BYTE(VDB)                
-            ;No se si es AND.B
+            CLR.B   4(A0)                   ; CLEAR STATUS BYTE(VDB)                
+
             MOVEM.L (A7)+,D0-D7/A0-A1       ; Restore content resgiters
             
             RTS
@@ -58,14 +58,14 @@ BTNUPD
 ; MODIFIES : NONE
 ; -----------------------------------------------------------------------------
             
-            MOVEM.L D0-D7/A0-A6,-(A7)       ; Save content registers
+            MOVEM.L D0-D5/A0-A2,-(A7)       ; Save content registers
             
             MOVE.B   #0,4(A0)               ; CLEAR STATUS BYTE
             MOVE.L  (A0),A1                 ; COPY @ SDB OF BUTTON
             
             ; COPY MOUSE POSITION
-            MOVE.W  MOUY,D0
-            MOVE.W  MOUX,D1
+            MOVE.W  MOUY,D0                 ; COPY MOUSE Y POSITION
+            MOVE.W  MOUX,D1                 ; COPY MOUSE X POSITION
             
             ; GET BUTTON POSITION
             MOVE.W  (A1)+,D2                ; TOP Y
@@ -73,37 +73,41 @@ BTNUPD
             MOVE.W  (A1)+,D4                ; HEIGHT
             MOVE.W  (A1)+,D5                ; WIDTH  
             
+            ; IF D2<D0 MOUSE NOT INSIDE (IS UPPER THAN THE BUTTON)
             CMP.W   D2,D0
             BLT     .MOUSEOUT
             
+            ; IF D3<D1 MOUSE NOT INSIDE (IS ON THE LEFT SIDE)
             CMP.W   D3,D1
             BLT     .MOUSEOUT
             
-            MOVE.W  D4,A2
-            ADD.W   D2,A2
-            CMP.W   A2,D0
+            ; IF D4>D0 MOUSE NOT INSIDE (IS LOWER THAN THE BUTTON)
+            ADD.W   D2,D4
+            CMP.W   D4,D0
             BGT     .MOUSEOUT
             
-            MOVE.W  D3,A2
-            ADD.W   D5,A2
-            CMP.W   A2,D0
+            ; IF D5>D0 MOUSE NOT INSIDE (IS ON THE RIGHT SIDE)
+            ADD.W   D3,D5
+            CMP.W   D5,D1
             BGT     .MOUSEOUT
 
-            MOVE.B  #1,4(A0)
-            BTST    #0,MOUVAL
-            BEQ     .END
-            MOVE.B  #3,4(A0)
-            BTST    #0,MOUEDGE 
-            BEQ     .END
-            MOVE.B  #7,4(A0)
+            ; UPDATE VDB 
+            MOVE.B  #1,4(A0)                ; I (BIT 0) = 1
+            BTST    #0,MOUVAL               ; BUTTON NOT PRESSED?
+            BEQ     .END                    ; BUTTON NOT PRESSED
+            MOVE.B  #3,4(A0)                ; P (BIT 1) = 1
+            BTST    #0,MOUEDGE              ; BUTTON NOT CLICKED?
+            BEQ     .END                    ; BUTTON NOT CLICKED
+            MOVE.B  #7,4(A0)                ; C (BIT 2) = 1
             
-            MOVE.L  (A1),A2
-            JSR     (A2)
-            BRA     .END            
+            ; EXECUTE CALLBACK
+            MOVE.L  (A1),A2                 ; COPY @ CALLBACK
+            JSR     (A2)                    ; JUMP TO CALLBACK SUBR
+            BRA     .END                    
             
-.MOUSEOUT   CLR.B   4(A0)
+.MOUSEOUT   CLR.B   4(A0)                   ; I,P,C = 0
 
-.END        MOVEM.L (A7)+,D0-D7/A0-A6       ; Restore content resgiters
+.END        MOVEM.L (A7)+,D0-D5/A0-A2       ; Restore content resgiters
            
             RTS
 
@@ -222,6 +226,8 @@ BTNPLOT
             
             RTS
                     
+
+
 
 
 

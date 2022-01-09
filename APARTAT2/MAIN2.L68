@@ -1,6 +1,6 @@
-000013F2 Starting Address
+000013EC Starting Address
 Assembler used: EASy68K Editor/Assembler v5.16.01
-Created On: 09/01/2022 23:19:09
+Created On: 09/01/2022 23:46:33
 
 00000000                             1  ; =============================================================================
 00000000                             2  ; TITLE    : GAME OF LIFE APPLICATION
@@ -120,11 +120,11 @@ Created On: 09/01/2022 23:19:09
 00001024  123C 0000                116              MOVE.B  #0, D1
 00001028  4E4F                     117              TRAP    #15
 0000102A  C0BC 00000007            118              AND.L   #7, D0
-00001030  13C0 000014F2            119              MOVE.B  D0, MOUVAL
-00001036  33C1 000014F0            120              MOVE.W  D1, MOUX
+00001030  13C0 000014EC            119              MOVE.B  D0, MOUVAL
+00001036  33C1 000014EA            120              MOVE.W  D1, MOUX
 0000103C  4841                     121              SWAP    D1
-0000103E  33C1 000014EE            122              MOVE.W  D1, MOUY            
-00001044  4239 000014F3            123              CLR.B   MOUEDGE                 ; clears MOUEDGE
+0000103E  33C1 000014E8            122              MOVE.W  D1, MOUY            
+00001044  4239 000014ED            123              CLR.B   MOUEDGE                 ; clears MOUEDGE
 0000104A  21FC 00001054 0084       124              MOVE.L  #MOUREAD,($80+MOUTRAP*4) ;Installs mouread into moutrap
 00001052                           125              
 00001052  4E75                     126              RTS
@@ -143,13 +143,13 @@ Created On: 09/01/2022 23:19:09
 00001054  303C 003D                139              MOVE.W  #61,D0
 00001058  4281                     140              CLR.L   D1
 0000105A  4E4F                     141              TRAP    #15
-0000105C  23C1 000014EE            142              MOVE.L  D1,(MOUY)               ; STORES CURRENT POS TO MOUX/Y
+0000105C  23C1 000014E8            142              MOVE.L  D1,(MOUY)               ; STORES CURRENT POS TO MOUX/Y
 00001062  C03C 0007                143              AND.B   #7,D0                   ; AND TO GET ONLY THE LAST 3 BITS
-00001066  1439 000014F2            144              MOVE.B  (MOUVAL),D2             ; COMPUTE EDGE
+00001066  1439 000014EC            144              MOVE.B  (MOUVAL),D2             ; COMPUTE EDGE
 0000106C  4602                     145              NOT.B   D2                      ; EDGE=NOT(PREVIOUS) AND CURRENT
 0000106E  C400                     146              AND.B   D0,D2
-00001070  13C0 000014F2            147              MOVE.B  D0,(MOUVAL)             ; STORES MOUSE STATUS TO MOUVAL 
-00001076  13C2 000014F3            148              MOVE.B  D2,(MOUEDGE)            ; STORES MOUEDGE
+00001070  13C0 000014EC            147              MOVE.B  D0,(MOUVAL)             ; STORES MOUSE STATUS TO MOUVAL 
+00001076  13C2 000014ED            148              MOVE.B  D2,(MOUEDGE)            ; STORES MOUEDGE
 0000107C                           149                  
 0000107C  4E73                     150              RTE
 0000107E                           151  
@@ -315,7 +315,7 @@ Created On: 09/01/2022 23:19:09
 000010D0                           311  ; OUTPUT   : NONE
 000010D0                           312  ; MODIFIES : NONE
 000010D0                           313  ; -----------------------------------------------------------------------------
-000010D0  4239 000014F4            314              CLR.B   (UTLRNDIX)
+000010D0  4239 000014EE            314              CLR.B   (UTLRNDIX)
 000010D6  4E75                     315              RTS
 000010D8                           316  
 000010D8                           317  ; -----------------------------------------------------------------------------
@@ -344,9 +344,9 @@ Created On: 09/01/2022 23:19:09
 000010EA  2F08                     340              MOVE.L  A0,-(A7)
 000010EC  41F9 00001108            341              LEA     .RANDVEC,A0
 000010F2  4281                     342              CLR.L   D1
-000010F4  1239 000014F4            343              MOVE.B  (UTLRNDIX),D1
+000010F4  1239 000014EE            343              MOVE.B  (UTLRNDIX),D1
 000010FA  1230 1800                344              MOVE.B  (A0,D1.L),D1
-000010FE  5239 000014F4            345              ADDQ.B  #1,(UTLRNDIX)
+000010FE  5239 000014EE            345              ADDQ.B  #1,(UTLRNDIX)
 00001104  205F                     346              MOVE.L  (A7)+,A0
 00001106  4E75                     347              RTS
 00001108                           348  
@@ -430,500 +430,506 @@ Created On: 09/01/2022 23:19:09
 00001208  48E7 FFC0                426              MOVEM.L D0-D7/A0-A1,-(A7)       ; Save content registers
 0000120C                           427              
 0000120C  2089                     428              MOVE.L  A1,(A0)                 ; Copy SDB pointer into VDB
-0000120E  0268 0000 0004           429              AND.W   #0,4(A0)                ; CLEAR STATUS BYTE(VDB)                
-00001214                           430              ;No se si es AND.B
-00001214  4CDF 03FF                431              MOVEM.L (A7)+,D0-D7/A0-A1       ; Restore content resgiters
-00001218                           432              
-00001218  4E75                     433              RTS
-0000121A                           434  
-0000121A                           435  ; -----------------------------------------------------------------------------
-0000121A                           436  BTNUPD
-0000121A                           437  ; UPDATES THE BUTTON VDB AND EXECUTES THE CALLBACK IF REQUIRED
-0000121A                           438  ; INPUT    : A0 - POINTER TO THE VARIABLE DATABLOCK
-0000121A                           439  ; OUTPUT   : NONE
-0000121A                           440  ; MODIFIES : NONE
-0000121A                           441  ; -----------------------------------------------------------------------------
-0000121A                           442              
-0000121A  48E7 FFFE                443              MOVEM.L D0-D7/A0-A6,-(A7)       ; Save content registers
-0000121E                           444              
-0000121E  117C 0000 0004           445              MOVE.B   #0,4(A0)               ; CLEAR STATUS BYTE
-00001224  2250                     446              MOVE.L  (A0),A1                 ; COPY @ SDB OF BUTTON
-00001226                           447              
-00001226                           448              ; COPY MOUSE POSITION
-00001226  3039 000014EE            449              MOVE.W  MOUY,D0
-0000122C  3239 000014F0            450              MOVE.W  MOUX,D1
-00001232                           451              
-00001232                           452              ; GET BUTTON POSITION
-00001232  3419                     453              MOVE.W  (A1)+,D2                ; TOP Y
-00001234  3619                     454              MOVE.W  (A1)+,D3                ; LEFT X
-00001236  3819                     455              MOVE.W  (A1)+,D4                ; HEIGHT
-00001238  3A19                     456              MOVE.W  (A1)+,D5                ; WIDTH  
-0000123A                           457              
-0000123A  B042                     458              CMP.W   D2,D0
-0000123C  6D00 004E                459              BLT     .MOUSEOUT
-00001240                           460              
-00001240  B243                     461              CMP.W   D3,D1
-00001242  6D00 0048                462              BLT     .MOUSEOUT
-00001246                           463              
-00001246  3444                     464              MOVE.W  D4,A2
-00001248  D4C2                     465              ADD.W   D2,A2
-0000124A  B04A                     466              CMP.W   A2,D0
-0000124C  6E00 003E                467              BGT     .MOUSEOUT
-00001250                           468              
-00001250  3443                     469              MOVE.W  D3,A2
-00001252  D4C5                     470              ADD.W   D5,A2
-00001254  B04A                     471              CMP.W   A2,D0
-00001256  6E00 0034                472              BGT     .MOUSEOUT
-0000125A                           473  
-0000125A  117C 0001 0004           474              MOVE.B  #1,4(A0)
-00001260  0839 0000 000014F2       475              BTST    #0,MOUVAL
-00001268  6700 0026                476              BEQ     .END
-0000126C  117C 0003 0004           477              MOVE.B  #3,4(A0)
-00001272  0839 0000 000014F3       478              BTST    #0,MOUEDGE 
-0000127A  6700 0014                479              BEQ     .END
-0000127E  117C 0007 0004           480              MOVE.B  #7,4(A0)
-00001284                           481              
-00001284  2451                     482              MOVE.L  (A1),A2
-00001286  4E92                     483              JSR     (A2)
-00001288  6000 0006                484              BRA     .END            
-0000128C                           485              
-0000128C  4228 0004                486  .MOUSEOUT   CLR.B   4(A0)
-00001290                           487  
-00001290  4CDF 7FFF                488  .END        MOVEM.L (A7)+,D0-D7/A0-A6       ; Restore content resgiters
-00001294                           489             
-00001294  4E75                     490              RTS
-00001296                           491  
-00001296                           492  ; -----------------------------------------------------------------------------
-00001296                           493  BTNPLOT
-00001296                           494  ; PLOTS THE BUTTON. A RECTANGLE IS DRAWN WITH THICKNESS BTNPENWD. THE CONTOUR
-00001296                           495  ; COLOR IS BTNPENCL. THE FILL COLOR IS BLACK IF THE MOUSE IS NOT INSIDE,
-00001296                           496  ; BTNSELCL IF THE MOUSE IS INSIDE BUT THE MOUSE BUTTON IS NOT PRESSED AND
-00001296                           497  ; BTNPRSCL IF THE MOUSE BUTTON IS PRESSED INSIDE.
-00001296                           498  ; INPUT    : A0 - POINTER TO THE VARIABLE DATABLOCK
-00001296                           499  ; OUTPUT   : NONE
-00001296                           500  ; MODIFIES : NONE
-00001296                           501  ; -----------------------------------------------------------------------------
-00001296                           502  
-00001296  48E7 FFE0                503              MOVEM.L D0-D7/A0-A2,-(A7)       ; Save content registers
-0000129A                           504              
-0000129A                           505              ; SET PEN COLOR
-0000129A  103C 0050                506              MOVE.B  #80,D0
-0000129E  223C 00005500            507              MOVE.L  #BTNPENCL,D1
-000012A4  4E4F                     508              TRAP    #15
-000012A6                           509              
-000012A6                           510              ; SET PEN WIDTH/THICKNESS
-000012A6  103C 005D                511              MOVE.B  #93,D0
-000012AA  7204                     512              MOVE.L  #BTNPENWD,D1
-000012AC  4E4F                     513              TRAP    #15
-000012AE                           514              
-000012AE                           515              ; Cambio de colores de los rectangulos
-000012AE  0C28 0000 0004           516              CMP.B   #0,4(A0)
-000012B4  6700 002C                517              BEQ     .MOUFUERA
-000012B8                           518      
-000012B8  0C28 0002 0004           519              CMP.B   #2,4(A0) ;Creo que tendría que ser tambíen si ha sido pulsado
-000012BE  6600 0012                520              BNE     .MOUPRESIONADO 
-000012C2                           521      
-000012C2                           522              ;Mouse encima del rectangulo   
-000012C2  223C 0000AA00            523              MOVE.L  #BTNSELCL,D1
-000012C8  103C 0051                524              MOVE.B  #81,D0
-000012CC  4E4F                     525              TRAP    #15
-000012CE  6000 001A                526              BRA     .SALIR
-000012D2                           527                
-000012D2                           528  .MOUPRESIONADO            
-000012D2                           529              ;Mouse presionando rectangulo
-000012D2  223C 00006600            530              MOVE.L  #BTNPRSCL,D1
-000012D8  103C 0051                531              MOVE.B  #81,D0
-000012DC  4E4F                     532              TRAP    #15
-000012DE  6000 000A                533              BRA     .SALIR
-000012E2                           534              
-000012E2                           535  .MOUFUERA
-000012E2                           536              ;Mouse fuera del rectangulo            
-000012E2  7200                     537              MOVE.L  #CLRBLACK,D1
-000012E4  103C 0051                538              MOVE.B  #81,D0
-000012E8  4E4F                     539              TRAP    #15
-000012EA                           540              
-000012EA                           541  .SALIR      
-000012EA  2250                     542              MOVE.L  (A0),A1                 ; COPY @ SDB OF BUTTON
-000012EC  4281                     543              CLR.L   D1
-000012EE                           544              
-000012EE                           545              ; GET COORDINATES(UP)
-000012EE  3419                     546              MOVE.W  (A1)+,D2                ; UPPER Y
-000012F0  3219                     547              MOVE.W  (A1)+,D1                ; LEFT X
-000012F2                           548              
-000012F2                           549              ; GET HEIGHT
-000012F2  3819                     550              MOVE.W  (A1)+,D4
-000012F4  3F04                     551              MOVE.W  D4,-(A7)
-000012F6                           552              
-000012F6                           553              ; GET WIDTH 
-000012F6  3619                     554              MOVE.W  (A1)+,D3
-000012F8  3E03                     555              MOVE.W  D3,D7
-000012FA                           556  
-000012FA                           557              ; GET COORDINATES(LOW)
-000012FA  D641                     558              ADD.W   D1,D3                   ; RIGHT X
-000012FC  3A02                     559              MOVE.W  D2,D5                   
-000012FE  DA44                     560              ADD.W   D4,D5                   ; LOWER Y
-00001300  3805                     561              MOVE.W  D5,D4 
-00001302                           562              
-00001302                           563              ; DRAW BUTTON
-00001302  103C 0057                564              MOVE.B  #87,D0
-00001306  4E4F                     565              TRAP    #15
-00001308                           566              
-00001308                           567              ; SET PEN COLOR
-00001308  3A01                     568              MOVE.W  D1,D5                   ; SAVE D1 CONTENT
-0000130A  103C 0050                569              MOVE.B  #80,D0
-0000130E  223C 00FFFFFF            570              MOVE.L  #CLRWHITE,D1
-00001314  4E4F                     571              TRAP    #15
-00001316  4281                     572              CLR.L   D1
-00001318  3205                     573              MOVE.W  D5,D1                   ; RESTORE D1
-0000131A                           574              
-0000131A                           575              ; GET & DRAW TEXT
-0000131A  5849                     576              ADD.W   #4,A1
-0000131C                           577              ; TEXTWIDTH  = NUMCAR*CHRWIDTH ; CHARACTER WIDTH
-0000131C                           578              ; TEXTHEIGHT = CHRHEIGH        ; CHARACTER HEIGHT
-0000131C  4285                     579              CLR.L   D5
-0000131E  2450                     580              MOVE.L  (A0),A2
-00001320  D4FC 000C                581              ADD.W   #12,A2
-00001324  1C1A                     582              MOVE.B  (A2)+,D6
-00001326  BC7C 0000                583  .LOOP       CMP     #0,D6                   ; GET TEXT LENGTH            
-0000132A  6700 0008                584              BEQ     .DONE
-0000132E  5245                     585              ADD.W   #1,D5
-00001330  1C1A                     586              MOVE.B  (A2)+,D6                
-00001332  60F2                     587              BRA     .LOOP
-00001334  CAFC 0008                588  .DONE       MULU.W  #CHRWIDTH,D5
-00001338  9E45                     589              SUB.W   D5,D7                   ; WIDTH-TEXTWIDTH
-0000133A  8EFC 0002                590              DIVU.W  #2,D7                   ; (WIDTH-TEXTWIDTH)/2
-0000133E  D247                     591              ADD.W   D7,D1                   ; LEFTX +(WIDTH-TEXTWIDTH)/2
-00001340                           592  
-00001340  381F                     593              MOVE.W  (A7)+,D4
-00001342  0444 0010                594              SUB.W   #CHRHEIGH,D4            ; HEIGHT-TEXTHEIGHT
-00001346  88FC 0002                595              DIVU.W  #2,D4                   ; (HEIGHT-TEXTHEIGHT)/2
-0000134A  D444                     596              ADD.W   D4,D2                   ; UPPERY+(HEIGHT-TEXTHEIGHT)/2
-0000134C                           597              
-0000134C  103C 005F                598              MOVE.B  #95,D0
-00001350  4E4F                     599              TRAP    #15
-00001352                           600              
-00001352  4CDF 07FF                601              MOVEM.L (A7)+,D0-D7/A0-A2       ; Restore content resgiters
-00001356                           602              
-00001356  4E75                     603              RTS
-00001358                           604                      
-00001358                           605  
-00001358                           606  
-00001358                           607  
-00001358                           608  
-00001358                           609  
-00001358                           610  
-00001358                           611  
-00001358                           612  
-00001358                           613  
-00001358                           614  
-00001358                           615  
-00001358                           616  -------------------- end include --------------------
-00001358                           617              INCLUDE "BTNLIST.X68"           ; BUTTON LIST MANAGEMENT
-00001358                           618  ; =============================================================================
-00001358                           619  ; TITLE    : BUTTON LIST MANAGEMENT
-00001358                           620  ; AUTHOR   : ANTONI BURGUERA
-00001358                           621  ; HISTORY  : 05-JULY-2021 - CREATION
-00001358                           622  ; COMMENTS : * ALLOWS ADDING, UPDATING AND PLOTTING A LIST OF BUTTONS. ALLOWS
-00001358                           623  ;              REMOVING THEM ALL, BUT NOT INDIVIDUALLY.
-00001358                           624  ;
-00001358                           625  ;            * THE LIST OF BUTTONS IS STORED AS A LIST OF BUTTON'S VDB. THIS
-00001358                           626  ;              LIST IS STORED AT BTLDATA.
-00001358                           627  ;
-00001358                           628  ;            * THE LIST OF VBD IS BUILT ASSUMING A MAXIMUM OF BTLMXVDB BUTTONS
-00001358                           629  ;              AND A SIZE OF BTNSZVDB BYTES FOR EACH VDB.
-00001358                           630  ; =============================================================================
-00001358                           631  
-00001358                           632  ; -----------------------------------------------------------------------------
-00001358                           633  BTLINIT
-00001358                           634  ; INITIALIZES BUTTON LIST BY SETTING ALL THE POINTERS TO STATIC DATA BLOCKS
-00001358                           635  ; TO $FFFFFFFF.
-00001358                           636  ; INPUT    : NONE
-00001358                           637  ; OUTPUT   : NONE
-00001358                           638  ; MODIFIES : NONE
-00001358                           639  ; -----------------------------------------------------------------------------
-00001358  48E7 8080                640              MOVEM.L D0/A0,-(A7)
-0000135C  41F9 000014F6            641              LEA     BTLDATA,A0
-00001362  303C 0009                642              MOVE.W  #BTLMXVDB-1,D0          ; NUM ITERATIONS
-00001366  20BC FFFFFFFF            643  .LOOP       MOVE.L  #$FFFFFFFF,(A0)         ; MARK SLOT AS EMPTY
-0000136C  5C88                     644              ADD.L   #BTNSZVDB,A0            ; GO TO NEXT SLOT
-0000136E  51C8 FFF6                645              DBRA.W  D0,.LOOP                ; LOOP FOR ALL SLOTS
-00001372  4CDF 0101                646              MOVEM.L (A7)+,D0/A0
-00001376  4E75                     647              RTS
-00001378                           648  
-00001378                           649  ; -----------------------------------------------------------------------------
-00001378  =00001358                650  BTLCLEAR    EQU     BTLINIT
-00001378                           651  ; CLEARS THE BUTTON LIST. SAME AS BTLINIT.
-00001378                           652  ; INPUT    : NONE
-00001378                           653  ; OUTPUT   : NONE
-00001378                           654  ; MODIFIES : NONE
-00001378                           655  ; -----------------------------------------------------------------------------
-00001378                           656  
-00001378                           657  ; -----------------------------------------------------------------------------
-00001378                           658  BTLADD
-00001378                           659  ; ADDS A NEW BUTTON INTO THE BUTTON LIST AND INITS IT.
-00001378                           660  ; INPUT    : A1 - POINTER TO THE BUTTON SDB
-00001378                           661  ; OUTPUT   : NONE
-00001378                           662  ; MODIFIES : NONE
-00001378                           663  ; -----------------------------------------------------------------------------
-00001378  48E7 8080                664              MOVEM.L A0/D0,-(A7)
-0000137C                           665  
-0000137C                           666              ; SEARCH FOR AN EMPTY SLOT
-0000137C                           667  
-0000137C  41F9 000014F6            668              LEA     BTLDATA,A0
-00001382  303C 0009                669              MOVE.W  #BTLMXVDB-1,D0
-00001386  0C90 FFFFFFFF            670  .LOOP       CMP.L   #$FFFFFFFF,(A0)
-0000138C  6700 000E                671              BEQ     .FOUND
-00001390  5C88                     672              ADD.L   #BTNSZVDB,A0
-00001392  51C8 FFF2                673              DBRA.W  D0,.LOOP
-00001396                           674  
-00001396                           675              ; NO SLOT? DO NOTHING
-00001396                           676  
-00001396  4CDF 0101                677  .END        MOVEM.L (A7)+,A0/D0
-0000139A  4E75                     678              RTS
-0000139C                           679  
-0000139C                           680              ; SLOT FOUND? PLACE THE BUTTON THERE BY CALLING BTNINIT
-0000139C                           681  
-0000139C  4EB8 1208                682  .FOUND      JSR     BTNINIT
-000013A0  60F4                     683              BRA     .END
-000013A2                           684  
-000013A2                           685  ; -----------------------------------------------------------------------------
-000013A2                           686  BTLUPD
-000013A2                           687  ; CALLS BTNUPD FOR ALL THE BUTTONS IN THE BUTTON LIST.
-000013A2                           688  ; INPUT    : NONE
-000013A2                           689  ; OUTPUT   : NONE
-000013A2                           690  ; MODIFIES : NONE
-000013A2                           691  ; -----------------------------------------------------------------------------
-000013A2                           692  
-000013A2  48E7 8080                693              MOVEM.L A0/D0,-(A7)
-000013A6                           694  
-000013A6                           695              ; TRAVERSE THE LIST
-000013A6                           696  
-000013A6  41F9 000014F6            697              LEA     BTLDATA,A0
-000013AC  303C 0009                698              MOVE.W  #BTLMXVDB-1,D0
-000013B0  0C90 FFFFFFFF            699  .LOOP       CMP.L   #$FFFFFFFF,(A0)
-000013B6  6700 000C                700              BEQ     .DONE
-000013BA                           701  
-000013BA                           702              ; UPDATE EACH BUTTON
-000013BA                           703  
-000013BA  4EB8 121A                704              JSR     BTNUPD
-000013BE                           705  
-000013BE                           706              ; GO TO THE NEXT BUTTON
-000013BE                           707  
-000013BE  5C88                     708              ADD.L   #BTNSZVDB,A0
-000013C0  51C8 FFEE                709              DBRA.W  D0,.LOOP
-000013C4                           710  
-000013C4  4CDF 0101                711  .DONE       MOVEM.L (A7)+,A0/D0
-000013C8  4E75                     712              RTS
-000013CA                           713  
-000013CA                           714  
-000013CA                           715  ; -----------------------------------------------------------------------------
-000013CA                           716  BTLPLOT
-000013CA                           717  ; CALLS BTNPLOT FOR ALL THE BUTTONS IN THE BUTTON LIST.
-000013CA                           718  ; INPUT    : NONE
-000013CA                           719  ; OUTPUT   : NONE
-000013CA                           720  ; MODIFIES : NONE
-000013CA                           721  ; -----------------------------------------------------------------------------
-000013CA                           722  
-000013CA                           723  ; TODO : PLACE YOUR CODE HERE
-000013CA                           724              ; JSR BTLUPD
-000013CA                           725              ; RTS
-000013CA  48E7 8080                726              MOVEM.L A0/D0,-(A7)             ; Save content registers
-000013CE                           727              
-000013CE  41F9 000014F6            728              LEA     BTLDATA,A0              ; @ OF THE BUTTONS
-000013D4  303C 0009                729              MOVE.W  #BTLMXVDB-1,D0
-000013D8  0C90 FFFFFFFF            730  .LOOP       CMP.L   #$FFFFFFFF,(A0)         ; Until end of list
-000013DE  6700 000C                731              BEQ     .DONE
-000013E2                           732  
-000013E2  4EB8 1296                733              JSR     BTNPLOT                 ; Calls BTNUPD
-000013E6                           734  
-000013E6  5C88                     735              ADD.L   #BTNSZVDB,A0            ; Next button
-000013E8  51C8 FFEE                736              DBRA.W  D0,.LOOP
-000013EC                           737              
-000013EC  4CDF 0101                738  .DONE       MOVEM.L (A7)+,A0/D0             ; Restore content resgiters
-000013F0                           739              
-000013F0  4E75                     740              RTS
-000013F2                           741  
-000013F2                           742              
-000013F2                           743  
-000013F2                           744  
-000013F2                           745  
-000013F2                           746  
-000013F2                           747  
-000013F2                           748  
-000013F2                           749  
-000013F2                           750  
-000013F2                           751  
-000013F2                           752  -------------------- end include --------------------
-000013F2                           753  
-000013F2                           754  ; --- INITIALIZE --------------------------------------------------------------
-000013F2                           755  
-000013F2  4EB8 1000                756  START       JSR     SYSINIT                 ; INITIALIZE SYSTEM CODE
-000013F6  4EB9 00001470            757              JSR     UIINIT                  ; INITIALIZE THE USER INTERFACE
-000013FC                           758  
-000013FC                           759  ; --- UPDATE ------------------------------------------------------------------
-000013FC                           760  
-000013FC  4E41                     761  .LOOP       TRAP    #MOUTRAP                ; READ MOUSE
-000013FE  4EB8 13A2                762              JSR     BTLUPD                  ; UPDATE THE USER INTERFACE
-00001402                           763  
-00001402                           764  ; --- PLOT --------------------------------------------------------------------
-00001402                           765  
-00001402  4EB8 13CA                766              JSR     BTLPLOT                 ; PLOT THE USER INTERFACE
-00001406  4E40                     767              TRAP    #SCRTRAP                ; SHOW GRAPHICS
-00001408  60F2                     768              BRA     .LOOP
-0000140A  FFFF FFFF                769              SIMHALT
-0000140E                           770  
-0000140E                           771  ; --- CALLBACKS ---------------------------------------------------------------
-0000140E                           772  
-0000140E                           773  ; -----------------------------------------------------------------------------
-0000140E                           774  CALP1WIN
-0000140E                           775  ; SUBROUTINE (USED AS CALLBACK) THAT PLAYS THE SOUND "PLAYER 1 WINS"
-0000140E                           776  ; INPUT    : NONE
-0000140E                           777  ; OUTPUT   : NONE
-0000140E                           778  ; MODIFIES : NONE
-0000140E                           779  ; -----------------------------------------------------------------------------
-0000140E  48E7 8040                780              MOVEM.L D0/A1,-(A7)
-00001412  43F9 00001424            781              LEA     .FNAME,A1
-00001418  103C 0046                782              MOVE.B  #70,D0
-0000141C  4E4F                     783              TRAP    #15
-0000141E  4CDF 0201                784              MOVEM.L (A7)+,D0/A1
-00001422  4E75                     785              RTS
-00001424= 50 31 57 49 4E 53 ...    786  .FNAME      DC.B    'P1WINS.WAV',0
-00001430                           787              DS.W    0
-00001430                           788  
-00001430                           789  ; -----------------------------------------------------------------------------
-00001430                           790  CALP2WIN
-00001430                           791  ; SUBROUTINE (USED AS CALLBACK) THAT PLAYS THE SOUND "PLAYER 2 WINS"
-00001430                           792  ; INPUT    : NONE
-00001430                           793  ; OUTPUT   : NONE
-00001430                           794  ; MODIFIES : NONE
-00001430                           795  ; -----------------------------------------------------------------------------
-00001430  48E7 8040                796              MOVEM.L D0/A1,-(A7)
-00001434  43F9 00001446            797              LEA     .FNAME,A1
-0000143A  103C 0046                798              MOVE.B  #70,D0
-0000143E  4E4F                     799              TRAP    #15
-00001440  4CDF 0201                800              MOVEM.L (A7)+,D0/A1
-00001444  4E75                     801              RTS
-00001446= 50 32 57 49 4E 53 ...    802  .FNAME      DC.B    'P2WINS.WAV',0
-00001452                           803              DS.W    0
-00001452                           804  
-00001452                           805  ; -----------------------------------------------------------------------------
-00001452                           806  CALTIE
-00001452                           807  ; SUBROUTINE (USED AS CALLBACK) THAT PLAYS A SOUND SIMBOLIZING A TIE (SORT OF)
-00001452                           808  ; INPUT    : NONE
-00001452                           809  ; OUTPUT   : NONE
-00001452                           810  ; MODIFIES : NONE
-00001452                           811  ; -----------------------------------------------------------------------------
-00001452  48E7 8040                812              MOVEM.L D0/A1,-(A7)
-00001456  43F9 00001468            813              LEA     .FNAME,A1
-0000145C  103C 0046                814              MOVE.B  #70,D0
-00001460  4E4F                     815              TRAP    #15
-00001462  4CDF 0201                816              MOVEM.L (A7)+,D0/A1
-00001466  4E75                     817              RTS
-00001468= 54 49 45 2E 57 41 ...    818  .FNAME      DC.B    'TIE.WAV',0
-00001470                           819              DS.W    0
-00001470                           820  
-00001470                           821  ; --- SUBROUTINES -------------------------------------------------------------
-00001470                           822  
-00001470                           823  ; -----------------------------------------------------------------------------
-00001470                           824  UIINIT
-00001470                           825  ; INITS THE USER INTERFACE BY INSERTINT THE THREE BUTTONS INTO THE BUTTON LIST
-00001470                           826  ; INPUT    : NONE
-00001470                           827  ; OUTPUT   : NONE
-00001470                           828  ; MODIFIES : NONE
-00001470                           829  ; -----------------------------------------------------------------------------
-00001470  48E7 00C0                830              MOVEM.L A0/A1,-(A7)
-00001474  4EB8 1358                831              JSR     BTLINIT
-00001478  41F9 00001496            832              LEA     .SDBLIST,A0
-0000147E  2258                     833  .LOOP       MOVE.L  (A0)+,A1
-00001480  B3FC FFFFFFFF            834              CMP.L   #-1,A1
-00001486  6700 0008                835              BEQ     .END
-0000148A  4EB8 1378                836              JSR     BTLADD
-0000148E  60EE                     837              BRA     .LOOP
-00001490  4CDF 0300                838  .END        MOVEM.L (A7)+,A0/A1
-00001494  4E75                     839              RTS
-00001496= 000014A6 000014C2 ...    840  .SDBLIST    DC.L    SDBP1W,SDBP2W,SDBTIE,-1
-000014A6                           841  
-000014A6                           842  ; --- BUTTONS STATIC DATA BLOCKS ----------------------------------------------
-000014A6                           843  
-000014A6= 00E6                     844  SDBP1W      DC.W    (SCRHEIGH-3*BTLVERSZ-2*BTLVEMRG)/2 ; YTOP COORDINATE
-000014A8= 012C                     845              DC.W    (SCRWIDTH-200)/2        ; XLEFT COORDINATE
-000014AA= 0028                     846              DC.W    BTLVERSZ                ; HEIGHT
-000014AC= 00C8                     847              DC.W    200                     ; WIDTH
-000014AE= 0000140E                 848              DC.L    CALP1WIN                ; CALLBACK
-000014B2= 50 4C 41 59 45 52 ...    849              DC.B    'PLAYER 1 WINS!',0      ; BUTTON TEXT
-000014C1                           850  
-000014C2= 0118                     851  SDBP2W      DC.W    (SCRHEIGH-BTLVERSZ)/2   ; YTOP COORDINATE
-000014C4= 012C                     852              DC.W    (SCRWIDTH-200)/2        ; XLEFT COORDINATE
-000014C6= 0028                     853              DC.W    BTLVERSZ                ; HEIGHT
-000014C8= 00C8                     854              DC.W    200                     ; WIDTH
-000014CA= 00001430                 855              DC.L    CALP2WIN                ; CALLBACK
-000014CE= 50 4C 41 59 45 52 ...    856              DC.B    'PLAYER 2 WINS!',0      ; BUTTON TEXT
-000014DD                           857  
-000014DE= 014A                     858  SDBTIE      DC.W    (SCRHEIGH+BTLVERSZ)/2+BTLVEMRG ; YTOP COORDINATE
-000014E0= 012C                     859              DC.W    (SCRWIDTH-200)/2        ; XLEFT COORDINATE
-000014E2= 0028                     860              DC.W    BTLVERSZ                ; HEIGHT
-000014E4= 00C8                     861              DC.W    200                     ; WIDTH
-000014E6= 00001452                 862              DC.L    CALTIE                  ; CALLBACK
-000014EA= 54 49 45 00              863              DC.B    'TIE',0                 ; BUTTON TEXT
-000014EE                           864  
-000014EE                           865  ; --- VARIABLES ---------------------------------------------------------------
-000014EE                           866  
-000014EE                           867              INCLUDE "SYSVAR.X68"            ; SYSTEM VARIABLES
-000014EE                           868  ; =============================================================================
-000014EE                           869  ; TITLE    : SYSTEM VARS
-000014EE                           870  ; AUTHOR   : ANTONI BURGUERA
-000014EE                           871  ; HISTORY  : 05-JULY-2021 - CREATION
-000014EE                           872  ; COMMENTS : * ALL THESE VARS ARE USED TO SHARE DATA FROM SYSTEM TO USER. THUS
-000014EE                           873  ;              THEY MUST NOT BE IN PROTECTED MEMORY.
-000014EE                           874  ;
-000014EE                           875  ;            * SINCE SOME SUBROUTINES TAKE ADVANTAGE OF THE ORDER IN WHICH
-000014EE                           876  ;              THE VARIABLES ARE IN MEMORY, THEIR ORDER SHOULD NOT BE ALTERED.
-000014EE                           877  ; =============================================================================
-000014EE                           878  
-000014EE                           879  ; --- MOUSE RELATED VARIABLES -------------------------------------------------
-000014EE                           880  
-000014EE                           881  MOUY        DS.W    1                       ; MOUSE Y COORDINATE
-000014F0                           882  MOUX        DS.W    1                       ; MOUSE X COORDINATE
-000014F2                           883  MOUVAL      DS.B    1                       ; CURRENT MOUSE BUTTON STATUS
-000014F3                           884  MOUEDGE     DS.B    1                       ; RISING EDGES IN MOUVAL
-000014F4                           885              DS.W    0
-000014F4                           886  -------------------- end include --------------------
-000014F4                           887              INCLUDE "VAR.X68"               ; USER VARIABLES
-000014F4                           888  ; =============================================================================
-000014F4                           889  ; TITLE    : USER VARS
-000014F4                           890  ; AUTHOR   : ANTONI BURGUERA
-000014F4                           891  ; HISTORY  : 05-JULY-2021 - CREATION
-000014F4                           892  ; COMMENTS : SEE THE CORRESPONDING FILES (UTIL.X68, BTNLIST.X68, GRID.X68 OR
-000014F4                           893  ;            GOL.X68) TO LEARN ABOUT THE MEANING OF THESE VARIABLES.
-000014F4                           894  ; =============================================================================
-000014F4                           895  
-000014F4                           896  ; --- UTILITY VARS ------------------------------------------------------------
-000014F4                           897  
-000014F4                           898  UTLRNDIX    DS.B    1                       ; RANDOM GENERATOR INDEX
-000014F6                           899              DS.W    0
-000014F6                           900  
-000014F6                           901  ; --- BUTTON LIST -------------------------------------------------------------
-000014F6                           902  
-000014F6                           903  BTLDATA     DS.B    BTLMXVDB*BTNSZVDB       ; BUTTONS VDB STORAGE
-00001532                           904              DS.W    0
-00001532                           905  
-00001532                           906  ; --- GRID --------------------------------------------------------------------
-00001532                           907  
-00001532                           908  GRDSRC      DS.L    1                       ; SOURCE MATRIX POINTER
-00001536                           909  GRDDST      DS.L    1                       ; DESTINATION MATRIX POINTER
-0000153A                           910  GRDMATR0    DS.B    GRDWIDTH*GRDHEIGH       ; ONE OF THE GRIDS...
-00001D3A                           911  GRDMATR1    DS.B    GRDWIDTH*GRDHEIGH       ; THE OTHER GRID
-0000253A                           912  GRDNPLR1    DS.W    1                       ; NUMBER OF PLAYER 1 CELLS
-0000253C                           913  GRDNPLR2    DS.W    1                       ; NUMBER OF PLAYER 2 CELLS
-0000253E                           914  GRDNGEN     DS.W    1                       ; NUMOER OF GENERATIONS
-00002540                           915  
-00002540                           916  ; --- APPLICATION -------------------------------------------------------------
-00002540                           917  
-00002540                           918  GOLSTATE    DS.B    1                       ; APPLICATION STATE
-00002542                           919              DS.W    0
-00002542                           920  -------------------- end include --------------------
-00002542                           921  
-00002542                           922              END    START
+0000120E  4228 0004                429              CLR.B   4(A0)                   ; CLEAR STATUS BYTE(VDB)                
+00001212                           430  
+00001212  4CDF 03FF                431              MOVEM.L (A7)+,D0-D7/A0-A1       ; Restore content resgiters
+00001216                           432              
+00001216  4E75                     433              RTS
+00001218                           434  
+00001218                           435  ; -----------------------------------------------------------------------------
+00001218                           436  BTNUPD
+00001218                           437  ; UPDATES THE BUTTON VDB AND EXECUTES THE CALLBACK IF REQUIRED
+00001218                           438  ; INPUT    : A0 - POINTER TO THE VARIABLE DATABLOCK
+00001218                           439  ; OUTPUT   : NONE
+00001218                           440  ; MODIFIES : NONE
+00001218                           441  ; -----------------------------------------------------------------------------
+00001218                           442              
+00001218  48E7 FCE0                443              MOVEM.L D0-D5/A0-A2,-(A7)       ; Save content registers
+0000121C                           444              
+0000121C  117C 0000 0004           445              MOVE.B   #0,4(A0)               ; CLEAR STATUS BYTE
+00001222  2250                     446              MOVE.L  (A0),A1                 ; COPY @ SDB OF BUTTON
+00001224                           447              
+00001224                           448              ; COPY MOUSE POSITION
+00001224  3039 000014E8            449              MOVE.W  MOUY,D0                 ; COPY MOUSE Y POSITION
+0000122A  3239 000014EA            450              MOVE.W  MOUX,D1                 ; COPY MOUSE X POSITION
+00001230                           451              
+00001230                           452              ; GET BUTTON POSITION
+00001230  3419                     453              MOVE.W  (A1)+,D2                ; TOP Y
+00001232  3619                     454              MOVE.W  (A1)+,D3                ; LEFT X
+00001234  3819                     455              MOVE.W  (A1)+,D4                ; HEIGHT
+00001236  3A19                     456              MOVE.W  (A1)+,D5                ; WIDTH  
+00001238                           457              
+00001238                           458              ; IF D2<D0 MOUSE NOT INSIDE (IS UPPER THAN THE BUTTON)
+00001238  B042                     459              CMP.W   D2,D0
+0000123A  6D00 004A                460              BLT     .MOUSEOUT
+0000123E                           461              
+0000123E                           462              ; IF D3<D1 MOUSE NOT INSIDE (IS ON THE LEFT SIDE)
+0000123E  B243                     463              CMP.W   D3,D1
+00001240  6D00 0044                464              BLT     .MOUSEOUT
+00001244                           465              
+00001244                           466              ; IF D4>D0 MOUSE NOT INSIDE (IS LOWER THAN THE BUTTON)
+00001244  D842                     467              ADD.W   D2,D4
+00001246  B044                     468              CMP.W   D4,D0
+00001248  6E00 003C                469              BGT     .MOUSEOUT
+0000124C                           470              
+0000124C                           471              ; IF D5>D0 MOUSE NOT INSIDE (IS ON THE RIGHT SIDE)
+0000124C  DA43                     472              ADD.W   D3,D5
+0000124E  B245                     473              CMP.W   D5,D1
+00001250  6E00 0034                474              BGT     .MOUSEOUT
+00001254                           475  
+00001254                           476              ; UPDATE VDB 
+00001254  117C 0001 0004           477              MOVE.B  #1,4(A0)                ; I (BIT 0) = 1
+0000125A  0839 0000 000014EC       478              BTST    #0,MOUVAL               ; BUTTON NOT PRESSED?
+00001262  6700 0026                479              BEQ     .END                    ; BUTTON NOT PRESSED
+00001266  117C 0003 0004           480              MOVE.B  #3,4(A0)                ; P (BIT 1) = 1
+0000126C  0839 0000 000014ED       481              BTST    #0,MOUEDGE              ; BUTTON NOT CLICKED?
+00001274  6700 0014                482              BEQ     .END                    ; BUTTON NOT CLICKED
+00001278  117C 0007 0004           483              MOVE.B  #7,4(A0)                ; C (BIT 2) = 1
+0000127E                           484              
+0000127E                           485              ; EXECUTE CALLBACK
+0000127E  2451                     486              MOVE.L  (A1),A2                 ; COPY @ CALLBACK
+00001280  4E92                     487              JSR     (A2)                    ; JUMP TO CALLBACK SUBR
+00001282  6000 0006                488              BRA     .END                    
+00001286                           489              
+00001286  4228 0004                490  .MOUSEOUT   CLR.B   4(A0)                   ; I,P,C = 0
+0000128A                           491  
+0000128A  4CDF 073F                492  .END        MOVEM.L (A7)+,D0-D5/A0-A2       ; Restore content resgiters
+0000128E                           493             
+0000128E  4E75                     494              RTS
+00001290                           495  
+00001290                           496  ; -----------------------------------------------------------------------------
+00001290                           497  BTNPLOT
+00001290                           498  ; PLOTS THE BUTTON. A RECTANGLE IS DRAWN WITH THICKNESS BTNPENWD. THE CONTOUR
+00001290                           499  ; COLOR IS BTNPENCL. THE FILL COLOR IS BLACK IF THE MOUSE IS NOT INSIDE,
+00001290                           500  ; BTNSELCL IF THE MOUSE IS INSIDE BUT THE MOUSE BUTTON IS NOT PRESSED AND
+00001290                           501  ; BTNPRSCL IF THE MOUSE BUTTON IS PRESSED INSIDE.
+00001290                           502  ; INPUT    : A0 - POINTER TO THE VARIABLE DATABLOCK
+00001290                           503  ; OUTPUT   : NONE
+00001290                           504  ; MODIFIES : NONE
+00001290                           505  ; -----------------------------------------------------------------------------
+00001290                           506  
+00001290  48E7 FFE0                507              MOVEM.L D0-D7/A0-A2,-(A7)       ; Save content registers
+00001294                           508              
+00001294                           509              ; SET PEN COLOR
+00001294  103C 0050                510              MOVE.B  #80,D0
+00001298  223C 00005500            511              MOVE.L  #BTNPENCL,D1
+0000129E  4E4F                     512              TRAP    #15
+000012A0                           513              
+000012A0                           514              ; SET PEN WIDTH/THICKNESS
+000012A0  103C 005D                515              MOVE.B  #93,D0
+000012A4  7204                     516              MOVE.L  #BTNPENWD,D1
+000012A6  4E4F                     517              TRAP    #15
+000012A8                           518              
+000012A8                           519              ; Cambio de colores de los rectangulos
+000012A8  0C28 0000 0004           520              CMP.B   #0,4(A0)
+000012AE  6700 002C                521              BEQ     .MOUFUERA
+000012B2                           522      
+000012B2  0C28 0002 0004           523              CMP.B   #2,4(A0) ;Creo que tendría que ser tambíen si ha sido pulsado
+000012B8  6600 0012                524              BNE     .MOUPRESIONADO 
+000012BC                           525      
+000012BC                           526              ;Mouse encima del rectangulo   
+000012BC  223C 0000AA00            527              MOVE.L  #BTNSELCL,D1
+000012C2  103C 0051                528              MOVE.B  #81,D0
+000012C6  4E4F                     529              TRAP    #15
+000012C8  6000 001A                530              BRA     .SALIR
+000012CC                           531                
+000012CC                           532  .MOUPRESIONADO            
+000012CC                           533              ;Mouse presionando rectangulo
+000012CC  223C 00006600            534              MOVE.L  #BTNPRSCL,D1
+000012D2  103C 0051                535              MOVE.B  #81,D0
+000012D6  4E4F                     536              TRAP    #15
+000012D8  6000 000A                537              BRA     .SALIR
+000012DC                           538              
+000012DC                           539  .MOUFUERA
+000012DC                           540              ;Mouse fuera del rectangulo            
+000012DC  7200                     541              MOVE.L  #CLRBLACK,D1
+000012DE  103C 0051                542              MOVE.B  #81,D0
+000012E2  4E4F                     543              TRAP    #15
+000012E4                           544              
+000012E4                           545  .SALIR      
+000012E4  2250                     546              MOVE.L  (A0),A1                 ; COPY @ SDB OF BUTTON
+000012E6  4281                     547              CLR.L   D1
+000012E8                           548              
+000012E8                           549              ; GET COORDINATES(UP)
+000012E8  3419                     550              MOVE.W  (A1)+,D2                ; UPPER Y
+000012EA  3219                     551              MOVE.W  (A1)+,D1                ; LEFT X
+000012EC                           552              
+000012EC                           553              ; GET HEIGHT
+000012EC  3819                     554              MOVE.W  (A1)+,D4
+000012EE  3F04                     555              MOVE.W  D4,-(A7)
+000012F0                           556              
+000012F0                           557              ; GET WIDTH 
+000012F0  3619                     558              MOVE.W  (A1)+,D3
+000012F2  3E03                     559              MOVE.W  D3,D7
+000012F4                           560  
+000012F4                           561              ; GET COORDINATES(LOW)
+000012F4  D641                     562              ADD.W   D1,D3                   ; RIGHT X
+000012F6  3A02                     563              MOVE.W  D2,D5                   
+000012F8  DA44                     564              ADD.W   D4,D5                   ; LOWER Y
+000012FA  3805                     565              MOVE.W  D5,D4 
+000012FC                           566              
+000012FC                           567              ; DRAW BUTTON
+000012FC  103C 0057                568              MOVE.B  #87,D0
+00001300  4E4F                     569              TRAP    #15
+00001302                           570              
+00001302                           571              ; SET PEN COLOR
+00001302  3A01                     572              MOVE.W  D1,D5                   ; SAVE D1 CONTENT
+00001304  103C 0050                573              MOVE.B  #80,D0
+00001308  223C 00FFFFFF            574              MOVE.L  #CLRWHITE,D1
+0000130E  4E4F                     575              TRAP    #15
+00001310  4281                     576              CLR.L   D1
+00001312  3205                     577              MOVE.W  D5,D1                   ; RESTORE D1
+00001314                           578              
+00001314                           579              ; GET & DRAW TEXT
+00001314  5849                     580              ADD.W   #4,A1
+00001316                           581              ; TEXTWIDTH  = NUMCAR*CHRWIDTH ; CHARACTER WIDTH
+00001316                           582              ; TEXTHEIGHT = CHRHEIGH        ; CHARACTER HEIGHT
+00001316  4285                     583              CLR.L   D5
+00001318  2450                     584              MOVE.L  (A0),A2
+0000131A  D4FC 000C                585              ADD.W   #12,A2
+0000131E  1C1A                     586              MOVE.B  (A2)+,D6
+00001320  BC7C 0000                587  .LOOP       CMP     #0,D6                   ; GET TEXT LENGTH            
+00001324  6700 0008                588              BEQ     .DONE
+00001328  5245                     589              ADD.W   #1,D5
+0000132A  1C1A                     590              MOVE.B  (A2)+,D6                
+0000132C  60F2                     591              BRA     .LOOP
+0000132E  CAFC 0008                592  .DONE       MULU.W  #CHRWIDTH,D5
+00001332  9E45                     593              SUB.W   D5,D7                   ; WIDTH-TEXTWIDTH
+00001334  8EFC 0002                594              DIVU.W  #2,D7                   ; (WIDTH-TEXTWIDTH)/2
+00001338  D247                     595              ADD.W   D7,D1                   ; LEFTX +(WIDTH-TEXTWIDTH)/2
+0000133A                           596  
+0000133A  381F                     597              MOVE.W  (A7)+,D4
+0000133C  0444 0010                598              SUB.W   #CHRHEIGH,D4            ; HEIGHT-TEXTHEIGHT
+00001340  88FC 0002                599              DIVU.W  #2,D4                   ; (HEIGHT-TEXTHEIGHT)/2
+00001344  D444                     600              ADD.W   D4,D2                   ; UPPERY+(HEIGHT-TEXTHEIGHT)/2
+00001346                           601              
+00001346  103C 005F                602              MOVE.B  #95,D0
+0000134A  4E4F                     603              TRAP    #15
+0000134C                           604              
+0000134C  4CDF 07FF                605              MOVEM.L (A7)+,D0-D7/A0-A2       ; Restore content resgiters
+00001350                           606              
+00001350  4E75                     607              RTS
+00001352                           608                      
+00001352                           609  
+00001352                           610  
+00001352                           611  
+00001352                           612  
+00001352                           613  
+00001352                           614  
+00001352                           615  
+00001352                           616  
+00001352                           617  
+00001352                           618  
+00001352                           619  
+00001352                           620  
+00001352                           621  
+00001352                           622  -------------------- end include --------------------
+00001352                           623              INCLUDE "BTNLIST.X68"           ; BUTTON LIST MANAGEMENT
+00001352                           624  ; =============================================================================
+00001352                           625  ; TITLE    : BUTTON LIST MANAGEMENT
+00001352                           626  ; AUTHOR   : ANTONI BURGUERA
+00001352                           627  ; HISTORY  : 05-JULY-2021 - CREATION
+00001352                           628  ; COMMENTS : * ALLOWS ADDING, UPDATING AND PLOTTING A LIST OF BUTTONS. ALLOWS
+00001352                           629  ;              REMOVING THEM ALL, BUT NOT INDIVIDUALLY.
+00001352                           630  ;
+00001352                           631  ;            * THE LIST OF BUTTONS IS STORED AS A LIST OF BUTTON'S VDB. THIS
+00001352                           632  ;              LIST IS STORED AT BTLDATA.
+00001352                           633  ;
+00001352                           634  ;            * THE LIST OF VBD IS BUILT ASSUMING A MAXIMUM OF BTLMXVDB BUTTONS
+00001352                           635  ;              AND A SIZE OF BTNSZVDB BYTES FOR EACH VDB.
+00001352                           636  ; =============================================================================
+00001352                           637  
+00001352                           638  ; -----------------------------------------------------------------------------
+00001352                           639  BTLINIT
+00001352                           640  ; INITIALIZES BUTTON LIST BY SETTING ALL THE POINTERS TO STATIC DATA BLOCKS
+00001352                           641  ; TO $FFFFFFFF.
+00001352                           642  ; INPUT    : NONE
+00001352                           643  ; OUTPUT   : NONE
+00001352                           644  ; MODIFIES : NONE
+00001352                           645  ; -----------------------------------------------------------------------------
+00001352  48E7 8080                646              MOVEM.L D0/A0,-(A7)
+00001356  41F9 000014F0            647              LEA     BTLDATA,A0
+0000135C  303C 0009                648              MOVE.W  #BTLMXVDB-1,D0          ; NUM ITERATIONS
+00001360  20BC FFFFFFFF            649  .LOOP       MOVE.L  #$FFFFFFFF,(A0)         ; MARK SLOT AS EMPTY
+00001366  5C88                     650              ADD.L   #BTNSZVDB,A0            ; GO TO NEXT SLOT
+00001368  51C8 FFF6                651              DBRA.W  D0,.LOOP                ; LOOP FOR ALL SLOTS
+0000136C  4CDF 0101                652              MOVEM.L (A7)+,D0/A0
+00001370  4E75                     653              RTS
+00001372                           654  
+00001372                           655  ; -----------------------------------------------------------------------------
+00001372  =00001352                656  BTLCLEAR    EQU     BTLINIT
+00001372                           657  ; CLEARS THE BUTTON LIST. SAME AS BTLINIT.
+00001372                           658  ; INPUT    : NONE
+00001372                           659  ; OUTPUT   : NONE
+00001372                           660  ; MODIFIES : NONE
+00001372                           661  ; -----------------------------------------------------------------------------
+00001372                           662  
+00001372                           663  ; -----------------------------------------------------------------------------
+00001372                           664  BTLADD
+00001372                           665  ; ADDS A NEW BUTTON INTO THE BUTTON LIST AND INITS IT.
+00001372                           666  ; INPUT    : A1 - POINTER TO THE BUTTON SDB
+00001372                           667  ; OUTPUT   : NONE
+00001372                           668  ; MODIFIES : NONE
+00001372                           669  ; -----------------------------------------------------------------------------
+00001372  48E7 8080                670              MOVEM.L A0/D0,-(A7)
+00001376                           671  
+00001376                           672              ; SEARCH FOR AN EMPTY SLOT
+00001376                           673  
+00001376  41F9 000014F0            674              LEA     BTLDATA,A0
+0000137C  303C 0009                675              MOVE.W  #BTLMXVDB-1,D0
+00001380  0C90 FFFFFFFF            676  .LOOP       CMP.L   #$FFFFFFFF,(A0)
+00001386  6700 000E                677              BEQ     .FOUND
+0000138A  5C88                     678              ADD.L   #BTNSZVDB,A0
+0000138C  51C8 FFF2                679              DBRA.W  D0,.LOOP
+00001390                           680  
+00001390                           681              ; NO SLOT? DO NOTHING
+00001390                           682  
+00001390  4CDF 0101                683  .END        MOVEM.L (A7)+,A0/D0
+00001394  4E75                     684              RTS
+00001396                           685  
+00001396                           686              ; SLOT FOUND? PLACE THE BUTTON THERE BY CALLING BTNINIT
+00001396                           687  
+00001396  4EB8 1208                688  .FOUND      JSR     BTNINIT
+0000139A  60F4                     689              BRA     .END
+0000139C                           690  
+0000139C                           691  ; -----------------------------------------------------------------------------
+0000139C                           692  BTLUPD
+0000139C                           693  ; CALLS BTNUPD FOR ALL THE BUTTONS IN THE BUTTON LIST.
+0000139C                           694  ; INPUT    : NONE
+0000139C                           695  ; OUTPUT   : NONE
+0000139C                           696  ; MODIFIES : NONE
+0000139C                           697  ; -----------------------------------------------------------------------------
+0000139C                           698  
+0000139C  48E7 8080                699              MOVEM.L A0/D0,-(A7)
+000013A0                           700  
+000013A0                           701              ; TRAVERSE THE LIST
+000013A0                           702  
+000013A0  41F9 000014F0            703              LEA     BTLDATA,A0
+000013A6  303C 0009                704              MOVE.W  #BTLMXVDB-1,D0
+000013AA  0C90 FFFFFFFF            705  .LOOP       CMP.L   #$FFFFFFFF,(A0)
+000013B0  6700 000C                706              BEQ     .DONE
+000013B4                           707  
+000013B4                           708              ; UPDATE EACH BUTTON
+000013B4                           709  
+000013B4  4EB8 1218                710              JSR     BTNUPD
+000013B8                           711  
+000013B8                           712              ; GO TO THE NEXT BUTTON
+000013B8                           713  
+000013B8  5C88                     714              ADD.L   #BTNSZVDB,A0
+000013BA  51C8 FFEE                715              DBRA.W  D0,.LOOP
+000013BE                           716  
+000013BE  4CDF 0101                717  .DONE       MOVEM.L (A7)+,A0/D0
+000013C2  4E75                     718              RTS
+000013C4                           719  
+000013C4                           720  
+000013C4                           721  ; -----------------------------------------------------------------------------
+000013C4                           722  BTLPLOT
+000013C4                           723  ; CALLS BTNPLOT FOR ALL THE BUTTONS IN THE BUTTON LIST.
+000013C4                           724  ; INPUT    : NONE
+000013C4                           725  ; OUTPUT   : NONE
+000013C4                           726  ; MODIFIES : NONE
+000013C4                           727  ; -----------------------------------------------------------------------------
+000013C4                           728  
+000013C4                           729  ; TODO : PLACE YOUR CODE HERE
+000013C4                           730              ; JSR BTLUPD
+000013C4                           731              ; RTS
+000013C4  48E7 8080                732              MOVEM.L A0/D0,-(A7)             ; Save content registers
+000013C8                           733              
+000013C8  41F9 000014F0            734              LEA     BTLDATA,A0              ; @ OF THE BUTTONS
+000013CE  303C 0009                735              MOVE.W  #BTLMXVDB-1,D0
+000013D2  0C90 FFFFFFFF            736  .LOOP       CMP.L   #$FFFFFFFF,(A0)         ; Until end of list
+000013D8  6700 000C                737              BEQ     .DONE
+000013DC                           738  
+000013DC  4EB8 1290                739              JSR     BTNPLOT                 ; Calls BTNUPD
+000013E0                           740  
+000013E0  5C88                     741              ADD.L   #BTNSZVDB,A0            ; Next button
+000013E2  51C8 FFEE                742              DBRA.W  D0,.LOOP
+000013E6                           743              
+000013E6  4CDF 0101                744  .DONE       MOVEM.L (A7)+,A0/D0             ; Restore content resgiters
+000013EA                           745              
+000013EA  4E75                     746              RTS
+000013EC                           747  
+000013EC                           748              
+000013EC                           749  
+000013EC                           750  
+000013EC                           751  
+000013EC                           752  
+000013EC                           753  
+000013EC                           754  
+000013EC                           755  
+000013EC                           756  
+000013EC                           757  
+000013EC                           758  -------------------- end include --------------------
+000013EC                           759  
+000013EC                           760  ; --- INITIALIZE --------------------------------------------------------------
+000013EC                           761  
+000013EC  4EB8 1000                762  START       JSR     SYSINIT                 ; INITIALIZE SYSTEM CODE
+000013F0  4EB9 0000146A            763              JSR     UIINIT                  ; INITIALIZE THE USER INTERFACE
+000013F6                           764  
+000013F6                           765  ; --- UPDATE ------------------------------------------------------------------
+000013F6                           766  
+000013F6  4E41                     767  .LOOP       TRAP    #MOUTRAP                ; READ MOUSE
+000013F8  4EB8 139C                768              JSR     BTLUPD                  ; UPDATE THE USER INTERFACE
+000013FC                           769  
+000013FC                           770  ; --- PLOT --------------------------------------------------------------------
+000013FC                           771  
+000013FC  4EB8 13C4                772              JSR     BTLPLOT                 ; PLOT THE USER INTERFACE
+00001400  4E40                     773              TRAP    #SCRTRAP                ; SHOW GRAPHICS
+00001402  60F2                     774              BRA     .LOOP
+00001404  FFFF FFFF                775              SIMHALT
+00001408                           776  
+00001408                           777  ; --- CALLBACKS ---------------------------------------------------------------
+00001408                           778  
+00001408                           779  ; -----------------------------------------------------------------------------
+00001408                           780  CALP1WIN
+00001408                           781  ; SUBROUTINE (USED AS CALLBACK) THAT PLAYS THE SOUND "PLAYER 1 WINS"
+00001408                           782  ; INPUT    : NONE
+00001408                           783  ; OUTPUT   : NONE
+00001408                           784  ; MODIFIES : NONE
+00001408                           785  ; -----------------------------------------------------------------------------
+00001408  48E7 8040                786              MOVEM.L D0/A1,-(A7)
+0000140C  43F9 0000141E            787              LEA     .FNAME,A1
+00001412  103C 0046                788              MOVE.B  #70,D0
+00001416  4E4F                     789              TRAP    #15
+00001418  4CDF 0201                790              MOVEM.L (A7)+,D0/A1
+0000141C  4E75                     791              RTS
+0000141E= 50 31 57 49 4E 53 ...    792  .FNAME      DC.B    'P1WINS.WAV',0
+0000142A                           793              DS.W    0
+0000142A                           794  
+0000142A                           795  ; -----------------------------------------------------------------------------
+0000142A                           796  CALP2WIN
+0000142A                           797  ; SUBROUTINE (USED AS CALLBACK) THAT PLAYS THE SOUND "PLAYER 2 WINS"
+0000142A                           798  ; INPUT    : NONE
+0000142A                           799  ; OUTPUT   : NONE
+0000142A                           800  ; MODIFIES : NONE
+0000142A                           801  ; -----------------------------------------------------------------------------
+0000142A  48E7 8040                802              MOVEM.L D0/A1,-(A7)
+0000142E  43F9 00001440            803              LEA     .FNAME,A1
+00001434  103C 0046                804              MOVE.B  #70,D0
+00001438  4E4F                     805              TRAP    #15
+0000143A  4CDF 0201                806              MOVEM.L (A7)+,D0/A1
+0000143E  4E75                     807              RTS
+00001440= 50 32 57 49 4E 53 ...    808  .FNAME      DC.B    'P2WINS.WAV',0
+0000144C                           809              DS.W    0
+0000144C                           810  
+0000144C                           811  ; -----------------------------------------------------------------------------
+0000144C                           812  CALTIE
+0000144C                           813  ; SUBROUTINE (USED AS CALLBACK) THAT PLAYS A SOUND SIMBOLIZING A TIE (SORT OF)
+0000144C                           814  ; INPUT    : NONE
+0000144C                           815  ; OUTPUT   : NONE
+0000144C                           816  ; MODIFIES : NONE
+0000144C                           817  ; -----------------------------------------------------------------------------
+0000144C  48E7 8040                818              MOVEM.L D0/A1,-(A7)
+00001450  43F9 00001462            819              LEA     .FNAME,A1
+00001456  103C 0046                820              MOVE.B  #70,D0
+0000145A  4E4F                     821              TRAP    #15
+0000145C  4CDF 0201                822              MOVEM.L (A7)+,D0/A1
+00001460  4E75                     823              RTS
+00001462= 54 49 45 2E 57 41 ...    824  .FNAME      DC.B    'TIE.WAV',0
+0000146A                           825              DS.W    0
+0000146A                           826  
+0000146A                           827  ; --- SUBROUTINES -------------------------------------------------------------
+0000146A                           828  
+0000146A                           829  ; -----------------------------------------------------------------------------
+0000146A                           830  UIINIT
+0000146A                           831  ; INITS THE USER INTERFACE BY INSERTINT THE THREE BUTTONS INTO THE BUTTON LIST
+0000146A                           832  ; INPUT    : NONE
+0000146A                           833  ; OUTPUT   : NONE
+0000146A                           834  ; MODIFIES : NONE
+0000146A                           835  ; -----------------------------------------------------------------------------
+0000146A  48E7 00C0                836              MOVEM.L A0/A1,-(A7)
+0000146E  4EB8 1352                837              JSR     BTLINIT
+00001472  41F9 00001490            838              LEA     .SDBLIST,A0
+00001478  2258                     839  .LOOP       MOVE.L  (A0)+,A1
+0000147A  B3FC FFFFFFFF            840              CMP.L   #-1,A1
+00001480  6700 0008                841              BEQ     .END
+00001484  4EB8 1372                842              JSR     BTLADD
+00001488  60EE                     843              BRA     .LOOP
+0000148A  4CDF 0300                844  .END        MOVEM.L (A7)+,A0/A1
+0000148E  4E75                     845              RTS
+00001490= 000014A0 000014BC ...    846  .SDBLIST    DC.L    SDBP1W,SDBP2W,SDBTIE,-1
+000014A0                           847  
+000014A0                           848  ; --- BUTTONS STATIC DATA BLOCKS ----------------------------------------------
+000014A0                           849  
+000014A0= 00E6                     850  SDBP1W      DC.W    (SCRHEIGH-3*BTLVERSZ-2*BTLVEMRG)/2 ; YTOP COORDINATE
+000014A2= 012C                     851              DC.W    (SCRWIDTH-200)/2        ; XLEFT COORDINATE
+000014A4= 0028                     852              DC.W    BTLVERSZ                ; HEIGHT
+000014A6= 00C8                     853              DC.W    200                     ; WIDTH
+000014A8= 00001408                 854              DC.L    CALP1WIN                ; CALLBACK
+000014AC= 50 4C 41 59 45 52 ...    855              DC.B    'PLAYER 1 WINS!',0      ; BUTTON TEXT
+000014BB                           856  
+000014BC= 0118                     857  SDBP2W      DC.W    (SCRHEIGH-BTLVERSZ)/2   ; YTOP COORDINATE
+000014BE= 012C                     858              DC.W    (SCRWIDTH-200)/2        ; XLEFT COORDINATE
+000014C0= 0028                     859              DC.W    BTLVERSZ                ; HEIGHT
+000014C2= 00C8                     860              DC.W    200                     ; WIDTH
+000014C4= 0000142A                 861              DC.L    CALP2WIN                ; CALLBACK
+000014C8= 50 4C 41 59 45 52 ...    862              DC.B    'PLAYER 2 WINS!',0      ; BUTTON TEXT
+000014D7                           863  
+000014D8= 014A                     864  SDBTIE      DC.W    (SCRHEIGH+BTLVERSZ)/2+BTLVEMRG ; YTOP COORDINATE
+000014DA= 012C                     865              DC.W    (SCRWIDTH-200)/2        ; XLEFT COORDINATE
+000014DC= 0028                     866              DC.W    BTLVERSZ                ; HEIGHT
+000014DE= 00C8                     867              DC.W    200                     ; WIDTH
+000014E0= 0000144C                 868              DC.L    CALTIE                  ; CALLBACK
+000014E4= 54 49 45 00              869              DC.B    'TIE',0                 ; BUTTON TEXT
+000014E8                           870  
+000014E8                           871  ; --- VARIABLES ---------------------------------------------------------------
+000014E8                           872  
+000014E8                           873              INCLUDE "SYSVAR.X68"            ; SYSTEM VARIABLES
+000014E8                           874  ; =============================================================================
+000014E8                           875  ; TITLE    : SYSTEM VARS
+000014E8                           876  ; AUTHOR   : ANTONI BURGUERA
+000014E8                           877  ; HISTORY  : 05-JULY-2021 - CREATION
+000014E8                           878  ; COMMENTS : * ALL THESE VARS ARE USED TO SHARE DATA FROM SYSTEM TO USER. THUS
+000014E8                           879  ;              THEY MUST NOT BE IN PROTECTED MEMORY.
+000014E8                           880  ;
+000014E8                           881  ;            * SINCE SOME SUBROUTINES TAKE ADVANTAGE OF THE ORDER IN WHICH
+000014E8                           882  ;              THE VARIABLES ARE IN MEMORY, THEIR ORDER SHOULD NOT BE ALTERED.
+000014E8                           883  ; =============================================================================
+000014E8                           884  
+000014E8                           885  ; --- MOUSE RELATED VARIABLES -------------------------------------------------
+000014E8                           886  
+000014E8                           887  MOUY        DS.W    1                       ; MOUSE Y COORDINATE
+000014EA                           888  MOUX        DS.W    1                       ; MOUSE X COORDINATE
+000014EC                           889  MOUVAL      DS.B    1                       ; CURRENT MOUSE BUTTON STATUS
+000014ED                           890  MOUEDGE     DS.B    1                       ; RISING EDGES IN MOUVAL
+000014EE                           891              DS.W    0
+000014EE                           892  -------------------- end include --------------------
+000014EE                           893              INCLUDE "VAR.X68"               ; USER VARIABLES
+000014EE                           894  ; =============================================================================
+000014EE                           895  ; TITLE    : USER VARS
+000014EE                           896  ; AUTHOR   : ANTONI BURGUERA
+000014EE                           897  ; HISTORY  : 05-JULY-2021 - CREATION
+000014EE                           898  ; COMMENTS : SEE THE CORRESPONDING FILES (UTIL.X68, BTNLIST.X68, GRID.X68 OR
+000014EE                           899  ;            GOL.X68) TO LEARN ABOUT THE MEANING OF THESE VARIABLES.
+000014EE                           900  ; =============================================================================
+000014EE                           901  
+000014EE                           902  ; --- UTILITY VARS ------------------------------------------------------------
+000014EE                           903  
+000014EE                           904  UTLRNDIX    DS.B    1                       ; RANDOM GENERATOR INDEX
+000014F0                           905              DS.W    0
+000014F0                           906  
+000014F0                           907  ; --- BUTTON LIST -------------------------------------------------------------
+000014F0                           908  
+000014F0                           909  BTLDATA     DS.B    BTLMXVDB*BTNSZVDB       ; BUTTONS VDB STORAGE
+0000152C                           910              DS.W    0
+0000152C                           911  
+0000152C                           912  ; --- GRID --------------------------------------------------------------------
+0000152C                           913  
+0000152C                           914  GRDSRC      DS.L    1                       ; SOURCE MATRIX POINTER
+00001530                           915  GRDDST      DS.L    1                       ; DESTINATION MATRIX POINTER
+00001534                           916  GRDMATR0    DS.B    GRDWIDTH*GRDHEIGH       ; ONE OF THE GRIDS...
+00001D34                           917  GRDMATR1    DS.B    GRDWIDTH*GRDHEIGH       ; THE OTHER GRID
+00002534                           918  GRDNPLR1    DS.W    1                       ; NUMBER OF PLAYER 1 CELLS
+00002536                           919  GRDNPLR2    DS.W    1                       ; NUMBER OF PLAYER 2 CELLS
+00002538                           920  GRDNGEN     DS.W    1                       ; NUMOER OF GENERATIONS
+0000253A                           921  
+0000253A                           922  ; --- APPLICATION -------------------------------------------------------------
+0000253A                           923  
+0000253A                           924  GOLSTATE    DS.B    1                       ; APPLICATION STATE
+0000253C                           925              DS.W    0
+0000253C                           926  -------------------- end include --------------------
+0000253C                           927  
+0000253C                           928              END    START
 
 No errors detected
 No warnings generated
@@ -932,45 +938,45 @@ No warnings generated
 SYMBOL TABLE INFORMATION
 Symbol-name         Value
 -------------------------
-BTLADD              1378
-BTLADD:END          1396
-BTLADD:FOUND        139C
-BTLADD:LOOP         1386
-BTLCLEAR            1358
-BTLDATA             14F6
+BTLADD              1372
+BTLADD:END          1390
+BTLADD:FOUND        1396
+BTLADD:LOOP         1380
+BTLCLEAR            1352
+BTLDATA             14F0
 BTLHOMRG            A
-BTLINIT             1358
-BTLINIT:LOOP        1366
+BTLINIT             1352
+BTLINIT:LOOP        1360
 BTLMXVDB            A
-BTLPLOT             13CA
-BTLPLOT:DONE        13EC
-BTLPLOT:LOOP        13D8
-BTLUPD              13A2
-BTLUPD:DONE         13C4
-BTLUPD:LOOP         13B0
+BTLPLOT             13C4
+BTLPLOT:DONE        13E6
+BTLPLOT:LOOP        13D2
+BTLUPD              139C
+BTLUPD:DONE         13BE
+BTLUPD:LOOP         13AA
 BTLVEMRG            A
 BTLVERSZ            28
 BTNINIT             1208
 BTNPENCL            5500
 BTNPENWD            4
-BTNPLOT             1296
-BTNPLOT:DONE        1334
-BTNPLOT:LOOP        1326
-BTNPLOT:MOUFUERA    12E2
-BTNPLOT:MOUPRESIONADO  12D2
-BTNPLOT:SALIR       12EA
+BTNPLOT             1290
+BTNPLOT:DONE        132E
+BTNPLOT:LOOP        1320
+BTNPLOT:MOUFUERA    12DC
+BTNPLOT:MOUPRESIONADO  12CC
+BTNPLOT:SALIR       12E4
 BTNPRSCL            6600
 BTNSELCL            AA00
 BTNSZVDB            6
-BTNUPD              121A
-BTNUPD:END          1290
-BTNUPD:MOUSEOUT     128C
-CALP1WIN            140E
-CALP1WIN:FNAME      1424
-CALP2WIN            1430
-CALP2WIN:FNAME      1446
-CALTIE              1452
-CALTIE:FNAME        1468
+BTNUPD              1218
+BTNUPD:END          128A
+BTNUPD:MOUSEOUT     1286
+CALP1WIN            1408
+CALP1WIN:FNAME      141E
+CALP2WIN            142A
+CALP2WIN:FNAME      1440
+CALTIE              144C
+CALTIE:FNAME        1462
 CHRHEIGH            10
 CHRSHHEI            4
 CHRSHWID            3
@@ -985,18 +991,18 @@ CLRWHITE            FFFFFF
 GOLMAXGN            FA
 GOLSEXEC            1
 GOLSPAUS            0
-GOLSTATE            2540
+GOLSTATE            253A
 GRDCOLP1            FF0000
 GRDCOLP2            FF
-GRDDST              1536
+GRDDST              1530
 GRDHEIGH            20
-GRDMATR0            153A
-GRDMATR1            1D3A
+GRDMATR0            1534
+GRDMATR1            1D34
 GRDMSHEI            1F
 GRDMSWID            3F
-GRDNGEN             253E
-GRDNPLR1            253A
-GRDNPLR2            253C
+GRDNGEN             2538
+GRDNPLR1            2534
+GRDNPLR2            2536
 GRDPXHEI            180
 GRDPXWID            300
 GRDSCNGX            30
@@ -1007,7 +1013,7 @@ GRDSCP2X            5E
 GRDSCP2Y            9
 GRDSHHEI            5
 GRDSHWID            6
-GRDSRC              1532
+GRDSRC              152C
 GRDSZCEL            C
 GRDVEMRG            6E
 GRDWIDTH            40
@@ -1016,35 +1022,35 @@ GRDYOFF             9E
 MOUBITLF            0
 MOUBITMD            2
 MOUBITRT            1
-MOUEDGE             14F3
+MOUEDGE             14ED
 MOUINIT             1020
 MOUMSKLF            1
 MOUMSKMD            4
 MOUMSKRT            2
 MOUREAD             1054
 MOUTRAP             1
-MOUVAL              14F2
-MOUX                14F0
-MOUY                14EE
+MOUVAL              14EC
+MOUX                14EA
+MOUY                14E8
 SCRHEIGH            258
 SCRINIT             107E
 SCRTRAP             0
 SCRUPD              10B6
 SCRWIDTH            320
-SDBP1W              14A6
-SDBP2W              14C2
-SDBTIE              14DE
-START               13F2
-START:LOOP          13FC
+SDBP1W              14A0
+SDBP2W              14BC
+SDBTIE              14D8
+START               13EC
+START:LOOP          13F6
 SYSINIT             1000
-UIINIT              1470
-UIINIT:END          1490
-UIINIT:LOOP         147E
-UIINIT:SDBLIST      1496
+UIINIT              146A
+UIINIT:END          148A
+UIINIT:LOOP         1478
+UIINIT:SDBLIST      1490
 UTLINIT             10D0
 UTLRAND             10EA
 UTLRAND:RANDVEC     1108
-UTLRNDIX            14F4
+UTLRNDIX            14EE
 UTLSTRLN            10D8
 UTLSTRLN:END        10E6
 UTLSTRLN:LOOP       10DC
