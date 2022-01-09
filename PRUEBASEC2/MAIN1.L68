@@ -1,0 +1,321 @@
+000010D0 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.16.01
+Created On: 09/01/2022 19:01:53
+
+00000000                             1  ; =============================================================================
+00000000                             2  ; TITLE    : GAME OF LIFE APPLICATION
+00000000                             3  ; AUTHOR   : ANTONI BURGUERA
+00000000                             4  ; CREATION : 05-JULY-2021
+00000000                             5  ; =============================================================================
+00000000                             6  
+00001000                             7              ORG     $1000
+00001000                             8  
+00001000                             9  ; --- CODE INCLUDES -----------------------------------------------------------
+00001000                            10  
+00001000                            11              INCLUDE "SYSCONST.X68"          ; SYSTEM CONSTANTS
+00001000                            12  ; =============================================================================
+00001000                            13  ; TITLE    : SYSTEM CONSTANTS
+00001000                            14  ; AUTHOR   : ANTONI BURGUERA
+00001000                            15  ; HISTORY  : 05-JULY-2021 - CREATION
+00001000                            16  ; COMMENTS : * MOUVAL AND MOUEDGE FORMAT IS AS FOLLOWS:
+00001000                            17  ;              +---+---+---+---+---+---+---+---+
+00001000                            18  ;              | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+00001000                            19  ;              +---+---+---+---+---+---+---+---+
+00001000                            20  ;              \-------------------/ |   |   |
+00001000                            21  ;                        |           |   |   +-- LEFT MOUSE BUTTON
+00001000                            22  ;                        |           |   +------ RIGHT MOUSE BUTTON
+00001000                            23  ;                        |           +---------- CENTRAL MOUSE BUTTON
+00001000                            24  ;                        +---------------------- 0
+00001000                            25  ;              A "1" IN ONE OF THESE BITS IN MOUVAL MEANS "BUTTON PRESSED".
+00001000                            26  ;              A "0" IN ONE OF THESE BITS IN MOUVAL MEANS "BUTTON NOT PRESSED".
+00001000                            27  ;              A "1" IN ONE OF THESE BITS IN MOUEDGE MEANS "BUTTON CLICKED".
+00001000                            28  ;              A "0" IN ONE OF THESE BITS IN MOUEDGE MEANS "BUTTON NOT CLICKED".
+00001000                            29  ;              A "CLICK" IS A CHANGE FROM 0 TO 1 IN SUBSEQUENT UPDATES.
+00001000                            30  ;              BOTH MOUVEL AND MOUEDGE ARE UPDATED BY TRAP #MOUTRAP
+00001000                            31  ;
+00001000                            32  ;            * MASKS AND BIT POSITIONS ARE DEFINED TO EASE MOUSE ACCESS. FOR
+00001000                            33  ;              EXAMPLE, ONE CAN DO THE FOLLOWING TO CHECK IF THE LEFT BUTTON
+00001000                            34  ;              IS PRESSED:
+00001000                            35  ;
+00001000                            36  ;              BTST.L #MOUBITLF,(MOUVAL)
+00001000                            37  ;              BNE ...
+00001000                            38  ;
+00001000                            39  ;              ALTERNATIVELY, ONE CAN ALSO DO THE FOLLOWING DEPENDING ON THE
+00001000                            40  ;              CONTEXT:
+00001000                            41  ;
+00001000                            42  ;              MOVE.B  (MOUVAL),D0
+00001000                            43  ;              AND.B   #MOUMSKLF,D0
+00001000                            44  ;              BNE ...
+00001000                            45  ; =============================================================================
+00001000                            46  
+00001000                            47  ; --- SCREEN RELATED CONSTANTS ------------------------------------------------
+00001000                            48  
+00001000  =00000000                 49  SCRTRAP     EQU     0                       ; SCREEN REFRESH TRAP NUMBER
+00001000  =00000320                 50  SCRWIDTH    EQU     800                     ; SCREEN WIDTH (PIXELS)
+00001000  =00000258                 51  SCRHEIGH    EQU     600                     ; SCREEN HEIGHT (PIXELS)
+00001000                            52  
+00001000                            53  ; --- MOUSE RELATED CONSTANTS -------------------------------------------------
+00001000                            54  
+00001000  =00000001                 55  MOUTRAP     EQU     1                       ; MOUSE QUERY TRAP NUMBER
+00001000  =00000001                 56  MOUMSKLF    EQU     %00000001               ; LEFT MOUSE BUTTON MASK
+00001000  =00000002                 57  MOUMSKRT    EQU     %00000010               ; RIGHT MOUSE BUTTON MASK
+00001000  =00000004                 58  MOUMSKMD    EQU     %00000100               ; MIDDLE MOUSE BUTTON MASL
+00001000  =00000000                 59  MOUBITLF    EQU     0                       ; LEFT MOUSE BUTTON BIT POSITION
+00001000  =00000001                 60  MOUBITRT    EQU     1                       ; RIGHT MOUSE BUTTON BIT POSITION
+00001000  =00000002                 61  MOUBITMD    EQU     2                       ; MIDDLE MOUSE BUTTON BIT POSITION
+00001000  =00000002                 62  -------------------- end include --------------------
+00001000                            63              INCLUDE "SYSTEM.X68"            ; SYSTEM CODE
+00001000                            64  ; =============================================================================
+00001000                            65  ; TITLE    : SYSTEM MANAGEMENT (SYSTEM CODE)
+00001000                            66  ; AUTHOR   : ANTONI BURGUERA
+00001000                            67  ; HISTORY  : 05-JULY-2021 - CREATION
+00001000                            68  ; COMMENTS : IT IS DIVIDED IN THREE BLOCKS:
+00001000                            69  ;            - SYS : GENERIC.
+00001000                            70  ;            - SCR : SCREEN MANAGEMENT.
+00001000                            71  ;            - MOU : MOUSE MANAGEMENT
+00001000                            72  ;            THE FORMAT OF MOUVAL AND MOUEDGE IS DESCRIBED IN SYSCONST.
+00001000                            73  ; =============================================================================
+00001000                            74  
+00001000                            75  ; -----------------------------------------------------------------------------
+00001000                            76  SYSINIT
+00001000                            77  ; INITIALIZES THE SYSTEM AS FOLLOWS:
+00001000                            78  ; * DISABLES INTERRUPTS
+00001000                            79  ; * CALLS SCRINIT
+00001000                            80  ; * CALLS MOUINIT
+00001000                            81  ; * ENABLES SIMULATOR EXCEPTION PROCESSING
+00001000                            82  ; * SWITCHES TO USER
+00001000                            83  ; INPUT    - NONE
+00001000                            84  ; OUTPUT   - NONE
+00001000                            85  ; MODIFIES - NONE
+00001000                            86  ; NOTE     - NOTE THAT INTERRUPTS REMAIN DISABLED AFTER THIS SUBROUTINE
+00001000                            87  ; -----------------------------------------------------------------------------
+00001000                            88              
+00001000                            89              
+00001000  007C 0700                 90              OR.W    #$0700,SR               ; Disables interrupts
+00001004  4EB9 0000107E             91              JSR     SCRINIT                 ; Calls to SCRINIT
+0000100A  4EB9 00001020             92              JSR     MOUINIT                 ; Calls to MOUINIT
+00001010  103C 0020                 93              MOVE.B  #32,D0                  ; Enable exception processing
+00001014  123C 0005                 94              MOVE.B  #5,D1                   
+00001018  4E4F                      95              TRAP    #15                      
+0000101A  46FC 2000                 96              MOVE    #$2000,SR               ; Switches to user 
+0000101E                            97              
+0000101E  4E75                      98              RTS
+00001020                            99  
+00001020                           100  ; =============================================================================
+00001020                           101  ; MOUSE MANAGEMENT (SYSTEM CODE)
+00001020                           102  ; =============================================================================
+00001020                           103  
+00001020                           104  ; -----------------------------------------------------------------------------
+00001020                           105  MOUINIT
+00001020                           106  ; INITIALIZES MOUSE AS FOLLOWS:
+00001020                           107  ; * STORES CURRENT MOUSE POSITION AND BUTTON STATUS INTO MOUY, MOUX AND MOUVAL
+00001020                           108  ; * CLEARS MOUEDGE
+00001020                           109  ; * INSTALLS MOUREAD INTO TRAP #MOUTRAP
+00001020                           110  ; INPUT    - NONE
+00001020                           111  ; OUTPUT   - NONE
+00001020                           112  ; MODIFIES - ALL REGISTERS CAN BE MODIFIED
+00001020                           113  ; -----------------------------------------------------------------------------
+00001020                           114  
+00001020  103C 003D                115              MOVE.B  #61, D0
+00001024  123C 0000                116              MOVE.B  #0, D1
+00001028  4E4F                     117              TRAP    #15
+0000102A  C0BC 00000007            118              AND.L   #7, D0
+00001030  13C0 00001140            119              MOVE.B  D0, MOUVAL
+00001036  33C1 0000113E            120              MOVE.W  D1, MOUX
+0000103C  4841                     121              SWAP    D1
+0000103E  33C1 0000113C            122              MOVE.W  D1, MOUY            
+00001044  4239 00001141            123              CLR.B   MOUEDGE                 ; clears MOUEDGE
+0000104A  21FC 00001054 0084       124              MOVE.L  #MOUREAD,($80+MOUTRAP*4) ;Installs mouread into moutrap
+00001052                           125              
+00001052  4E75                     126              RTS
+00001054                           127  
+00001054                           128  ; -----------------------------------------------------------------------------
+00001054                           129  MOUREAD
+00001054                           130  ; MOUSE READING TRAP SERVICE ROUTINE. IT DOES THE FOLLOWING:
+00001054                           131  ; * STORES CURRENT MOUSE POSITION INTO MOUY AND MOUX.
+00001054                           132  ; * STORES CURRENT BUTTON STATUS INTO MOUVAL
+00001054                           133  ; * COMPUTES AND STORES MOUEDGE
+00001054                           134  ; INPUT    - NONE
+00001054                           135  ; OUTPUT   - NONE
+00001054                           136  ; MODIFIES - NONE
+00001054                           137  ; -----------------------------------------------------------------------------
+00001054                           138                         
+00001054  303C 003D                139              MOVE.W  #61,D0
+00001058  4281                     140              CLR.L   D1
+0000105A  4E4F                     141              TRAP    #15
+0000105C  23C1 0000113C            142              MOVE.L  D1,(MOUY)               ; STORES CURRENT POS TO MOUX/Y
+00001062  C03C 0007                143              AND.B   #7,D0                   ; AND TO GET ONLY THE LAST 3 BITS
+00001066  1439 00001140            144              MOVE.B  (MOUVAL),D2             ; COMPUTE EDGE
+0000106C  4602                     145              NOT.B   D2                      ; EDGE=NOT(PREVIOUS) AND CURRENT
+0000106E  C400                     146              AND.B   D0,D2
+00001070  13C0 00001140            147              MOVE.B  D0,(MOUVAL)             ; STORES MOUSE STATUS TO MOUVAL 
+00001076  13C2 00001141            148              MOVE.B  D2,(MOUEDGE)            ; STORES MOUEDGE
+0000107C                           149                  
+0000107C  4E73                     150              RTE
+0000107E                           151  
+0000107E                           152  ; =============================================================================
+0000107E                           153  ; SCREEN MANAGEMENT (SYSTEM CODE)
+0000107E                           154  ; =============================================================================
+0000107E                           155  
+0000107E                           156  ; -----------------------------------------------------------------------------
+0000107E                           157  SCRINIT
+0000107E                           158  ; INITIALIZES THE SCREEN, SCREEN-RELATED INTERRUPT AND VARS AS FOLLOWS:
+0000107E                           159  ; * INSTALLS SCRUPD INTO TRAP #SCRTRAP
+0000107E                           160  ; * SETS OUTPUT RESOLUTION TO SCRWIDTH*SCRHEIGH
+0000107E                           161  ; * SETS OUTPUT TO WINDOWED MODE
+0000107E                           162  ; * ENABLES DOUBLE BUFFER AND CLEARS BOTH SCREEN BUFFERS
+0000107E                           163  ; INPUT    - NONE
+0000107E                           164  ; OUTPUT   - NONE
+0000107E                           165  ; MODIFIES - ALL REGISTERS CAN BE MODIFIED
+0000107E                           166  ; -----------------------------------------------------------------------------
+0000107E  21FC 000010B6 0080       167              MOVE.L  #SCRUPD,($80+SCRTRAP*4) ; INSTALL TRAP
+00001086  223C 03200258            168              MOVE.L  #SCRWIDTH<<16|SCRHEIGH,D1 ; SET RESOLUTION
+0000108C  103C 0021                169              MOVE.B  #33,D0
+00001090  4E4F                     170              TRAP    #15
+00001092  7201                     171              MOVE.L  #1,D1                   ; SET WINDOWED MODE
+00001094  4E4F                     172              TRAP    #15
+00001096  323C FF00                173              MOVE.W  #$FF00,D1               ; CLEAR VISIBLE BUFFER
+0000109A  103C 000B                174              MOVE.B  #11,D0
+0000109E  4E4F                     175              TRAP    #15
+000010A0  123C 0011                176              MOVE.B  #17,D1                  ; ENABLE DOUBLE BUFFER
+000010A4  103C 005C                177              MOVE.B  #92,D0
+000010A8  4E4F                     178              TRAP    #15
+000010AA  323C FF00                179              MOVE.W  #$FF00,D1               ; CLEAR HIDDEN BUFFER
+000010AE  103C 000B                180              MOVE.B  #11,D0
+000010B2  4E4F                     181              TRAP    #15
+000010B4  4E75                     182              RTS
+000010B6                           183  
+000010B6                           184  ; -----------------------------------------------------------------------------
+000010B6                           185  SCRUPD
+000010B6                           186  ; TRAP SERVICE ROUTINE IN CHARGE OF VISUALIZING CURRENT FRAME AND CLEARING
+000010B6                           187  ; BUFFER FOR THE NEXT ONE. PERFORMS TWO TASKS:
+000010B6                           188  ; * CLEARS ACTIVE (HIDDEN) GRAPHICS BUFFER
+000010B6                           189  ; * SWITCHES ACTIVE AND VISIBLE GRAPHICS BUFFER
+000010B6                           190  ; INPUT    - NONE
+000010B6                           191  ; OUTPUT   - NONE
+000010B6                           192  ; MODIFIES - NONE
+000010B6                           193  ; -----------------------------------------------------------------------------
+000010B6  48A7 C000                194              MOVEM.W D0-D1,-(A7)
+000010BA  103C 005E                195              MOVE.B  #94,D0                  ; UPDATE DOUBLE BUFFER
+000010BE  4E4F                     196              TRAP    #15
+000010C0  323C FF00                197              MOVE.W  #$FF00,D1               ; CLEAR HIDDEN BUFFER
+000010C4  103C 000B                198              MOVE.B  #11,D0
+000010C8  4E4F                     199              TRAP    #15
+000010CA  4C9F 0003                200              MOVEM.W (A7)+,D0-D1
+000010CE  4E73                     201              RTE
+000010D0                           202  
+000010D0                           203  
+000010D0                           204  
+000010D0                           205  
+000010D0                           206  
+000010D0                           207  
+000010D0                           208  -------------------- end include --------------------
+000010D0                           209  
+000010D0                           210  ; --- INITIALIZE --------------------------------------------------------------
+000010D0                           211  
+000010D0  4EB8 1000                212  START       JSR     SYSINIT                 ; INITIALIZE SYSTEM CODE
+000010D4                           213  
+000010D4                           214  ; --- UPDATE ------------------------------------------------------------------
+000010D4                           215  
+000010D4  4E41                     216  .LOOP       TRAP    #MOUTRAP                ; READ MOUSE
+000010D6                           217  
+000010D6                           218              ; SET COLOR DEPENDING ON THE MOUSE BUTTON PRESSED
+000010D6                           219  
+000010D6  4281                     220              CLR.L   D1                      ; PREPARE BLACK COLOR IN ADVANCE
+000010D8  1039 00001140            221              MOVE.B  (MOUVAL),D0             ; GET MOUSE BUTTONS STATUS
+000010DE  6700 0024                222              BEQ     .SETCOL                 ; NO BUTTON: GO TO SET COLOR
+000010E2  223C 00FF0000            223              MOVE.L  #$00FF0000,D1           ; PREPARE BLUE COLOR IN ADVANCE
+000010E8  0800 0000                224              BTST.L  #MOUBITLF,D0            ; IS IT LEFT BUTTON?
+000010EC  6600 0016                225              BNE     .SETCOL                 ; IF LEFT: GO TO SET COLOR
+000010F0  223C 0000FF00            226              MOVE.L  #$0000FF00,D1           ; PREPARE GREEN COLOR IN ADVANCE
+000010F6  C03C 0002                227              AND.B   #MOUMSKRT,D0            ; IS IT RIGHT BUTTON?
+000010FA  6600 0008                228              BNE     .SETCOL                 ; IF RIGHT: GO TO SET COLOR
+000010FE  223C 000000FF            229              MOVE.L  #$000000FF,D1           ; RED. MID BUTTON IS ASSURED HERE
+00001104  103C 0051                230  .SETCOL     MOVE.B  #81,D0                  ; SET FILL COLOR TRAP ID
+00001108  4E4F                     231              TRAP    #15                     ; SET FILL COLOR
+0000110A                           232  
+0000110A                           233              ; PLACE THE TEXT CURSOR AT (0,0)
+0000110A                           234  
+0000110A  103C 000B                235              MOVE.B  #11,D0                  ; TASK ID TO POSITION TEXT
+0000110E  4E4F                     236              TRAP    #15                     ; POSITION TEXT AT (0,0)
+00001110                           237  
+00001110                           238              ; PRINT THE MOUSE X COORDINATE
+00001110                           239  
+00001110  4281                     240              CLR.L   D1                      ; POS=(0,0) AND CLEAR ALL BITS
+00001112  103C 0003                241              MOVE.B  #3,D0                   ; TASK ID TO PRINT A NUMBER
+00001116  3239 0000113E            242              MOVE.W  (MOUX),D1               ; GET THE MOUSE X COORDINATE
+0000111C  4E4F                     243              TRAP    #15                     ; PRINT THE X COORDINATE
+0000111E                           244  
+0000111E                           245              ; PRINT A COMMA
+0000111E                           246  
+0000111E  103C 0006                247              MOVE.B  #6,D0                   ; TASK ID TO PRINT A CHARACTER
+00001122  123C 002C                248              MOVE.B  #',',D1                 ; CHARACTER TO PRINT
+00001126  4E4F                     249              TRAP    #15                     ; PRINT THE COMMA
+00001128                           250  
+00001128                           251              ; PRINT THE MOUSE Y COORDINATE
+00001128                           252  
+00001128  103C 0003                253              MOVE.B  #3,D0                   ; TASK ID TO PRINT A NUMBER
+0000112C  3239 0000113C            254              MOVE.W  (MOUY),D1               ; GET THE MOUSE Y COORDINATE
+00001132  4E4F                     255              TRAP    #15                     ; PRINT THE Y COORDINATE
+00001134                           256  
+00001134                           257  ; --- PLOT --------------------------------------------------------------------
+00001134                           258  
+00001134                           259  
+00001134  4E40                     260              TRAP    #SCRTRAP                ; SHOW GRAPHICS
+00001136  609C                     261              BRA     .LOOP
+00001138  FFFF FFFF                262              SIMHALT
+0000113C                           263  
+0000113C                           264  ; --- VARIABLES ---------------------------------------------------------------
+0000113C                           265  
+0000113C                           266              INCLUDE "SYSVAR.X68"            ; SYSTEM VARIABLES
+0000113C                           267  ; =============================================================================
+0000113C                           268  ; TITLE    : SYSTEM VARS
+0000113C                           269  ; AUTHOR   : ANTONI BURGUERA
+0000113C                           270  ; HISTORY  : 05-JULY-2021 - CREATION
+0000113C                           271  ; COMMENTS : * ALL THESE VARS ARE USED TO SHARE DATA FROM SYSTEM TO USER. THUS
+0000113C                           272  ;              THEY MUST NOT BE IN PROTECTED MEMORY.
+0000113C                           273  ;
+0000113C                           274  ;            * SINCE SOME SUBROUTINES TAKE ADVANTAGE OF THE ORDER IN WHICH
+0000113C                           275  ;              THE VARIABLES ARE IN MEMORY, THEIR ORDER SHOULD NOT BE ALTERED.
+0000113C                           276  ; =============================================================================
+0000113C                           277  
+0000113C                           278  ; --- MOUSE RELATED VARIABLES -------------------------------------------------
+0000113C                           279  
+0000113C                           280  MOUY        DS.W    1                       ; MOUSE Y COORDINATE
+0000113E                           281  MOUX        DS.W    1                       ; MOUSE X COORDINATE
+00001140                           282  MOUVAL      DS.B    1                       ; CURRENT MOUSE BUTTON STATUS
+00001141                           283  MOUEDGE     DS.B    1                       ; RISING EDGES IN MOUVAL
+00001142                           284              DS.W    0
+00001142                           285  -------------------- end include --------------------
+00001142                           286  
+00001142                           287              END    START
+
+No errors detected
+No warnings generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+MOUBITLF            0
+MOUBITMD            2
+MOUBITRT            1
+MOUEDGE             1141
+MOUINIT             1020
+MOUMSKLF            1
+MOUMSKMD            4
+MOUMSKRT            2
+MOUREAD             1054
+MOUTRAP             1
+MOUVAL              1140
+MOUX                113E
+MOUY                113C
+SCRHEIGH            258
+SCRINIT             107E
+SCRTRAP             0
+SCRUPD              10B6
+SCRWIDTH            320
+START               10D0
+START:LOOP          10D4
+START:SETCOL        1104
+SYSINIT             1000
