@@ -103,6 +103,8 @@ GRDRUPD
             MOVEM.L D0-D7/A0-A6,-(A7)
 
 
+        
+
             MOVEM.L (A7)+,D0-D7/A0-A6       
             RTS
 
@@ -224,10 +226,9 @@ GRDLLEFT
 
 ; TODO : PLACE YOUR CODE HERE
 
-
             MOVEM.L D0-D7/A0-A6,-(A7)       ; SAVE CONTENT REGISTERS
             
-            MOVE.B  #50,D0                  ; CLOSE ALL FILES
+            MOVE.B  #50,D0                  ; CLOSE ALL FILES (RECOMMENDED)
             TRAP    #15
             SUB.L   #512,A7                 ; ROW BUFFER IN LOCAL MEMORY
             MOVE.B  #58,D0                  ; SHOW FILE DIALOG TASK
@@ -244,8 +245,27 @@ GRDLLEFT
             TRAP    #15
             TST.W   D0                      ; CHECK ERRORS
             BNE     .END                    ; IF ERRORS, DO NOTHING MORE
-            
+            MOVE.L  A7,A6                   ; PUT A6 INTO START OF BUFFER
+            MOVE.L  A7,A1                   ; PUT A1 INTO START OF BUFFER
+            MOVE.L  (GRDDST), A0            ; POINTER TO STORE PROCESS. DATA
+            MOVE.W  #GRDHEIGH-1,D3
+.LOOP       MOVE.L  A6,A1
+            MOVE.B  #53,D0                  ; READ DATA TASK NUMBER
+            MOVE.L  #GRDWIDTH*2+1,D2        ; NUMBER OF BYTES TO READ
+            TRAP    #15                     ; READ THE DATA
+            ;En teoría llega hasta la mitad de las casillas y se renicia
+            ;para la siguiente fila
+            MOVE.W  #(GRDWIDTH/2)-1,D2      ; COPY HALF OF GRID
+.COPY       MOVE.B  (A1)+,D0                ; PICK ONE LOADED CHARACTER
+            SUB.B   #'0',D0                 ; CONVERT FROM ASCII TO NUMBER
+            MOVE.B  D0,(A0)+                ; STORE DATA
+            ADDQ.L  #1,A1                   ; SKIP THE COMMA
+            DBRA.W  D2,.COPY
+            DBRA.W  D3,.LOOP
+            MOVE.B  #56,D0                  ; CLOSE FILE
+            TRAP    #15
 .END        ADD.L   #512,A7                 ; RESTORE STACK
+            
             MOVEM.L (A7)+,D0-D7/A0-A6       ; RESTORES CONTENT REGISTERS
             RTS
 
@@ -268,9 +288,49 @@ GRDLRGT
 ; TODO : PLACE YOUR CODE HERE
 
             MOVEM.L D0-D7/A0-A6,-(A7)       ; SAVE CONTENT REGISTERS
-            MOVE.B  #50,D0                  ; CLOSE ALL FILES 
-            TRAP    #15
 
+            MOVE.B  #50,D0                  ; CLOSE ALL FILES (RECOMMENDED)
+            TRAP    #15
+            SUB.L   #512,A7                 ; ROW BUFFER IN LOCAL MEMORY
+            MOVE.B  #58,D0                  ; SHOW FILE DIALOG TASK
+            CLR.L   D1                      ; DISPLAY LOAD DIALOG
+            LEA     .MSG,A1                 ; STANDARD MESSAGE
+            LEA     .FILTER,A2              ; NO FILTER
+            MOVE.L  A7,A3                   ; FILE NAME BUFFER
+            CLR.W   (A3)                    ; ENSURE THERE IS NO STRING
+            TRAP    #15
+            TST.B   D1
+            BEQ     .END                    ; IF CANCELLED, DO NOTHING
+            MOVE.L  A3,A1                   ; PLACE THE FILENAME INTO A1
+            MOVE.B  #51,D0                  ; OPEN EXISTING FILE
+            TRAP    #15
+            TST.W   D0                      ; CHECK ERRORS
+            BNE     .END                    ; IF ERRORS, DO NOTHING MORE
+            MOVE.L  A7,A6                   ; PUT A6 INTO START OF BUFFER
+            MOVE.L  A7,A1                   ; PUT A1 INTO START OF BUFFER
+            MOVE.L  (GRDDST), A0            ; POINTER TO STORE PROCESS. DATA
+            MOVE.W  #GRDHEIGH-1,D3
+.LOOP       MOVE.L  A6,A1
+            MOVE.B  #53,D0                  ; READ DATA TASK NUMBER
+            MOVE.L  #GRDWIDTH*2+1,D2        ; NUMBER OF BYTES TO READ
+            TRAP    #15                     ; READ THE DATA
+            ;En teoría llega hasta la mitad de las casillas y se renicia
+            ;para la siguiente fila
+            MOVE.W  #(GRDWIDTH/2)-1,D2      ; COPY HALF OF GRID
+            ;En teoría si se empieza a guadar desde la mitad, se tendría que guardar
+            ;la parte derecha del grid, es decir, por cada fila sse tiene que empezar
+            ;por la mitad y para ello sumando la mitad del grid a donde se guarda 
+            ;tendría que funcionar
+            ADD.W   #D2,A0
+.COPY       MOVE.B  (A1)+,D0                ; PICK ONE LOADED CHARACTER
+            SUB.B   #'0',D0                 ; CONVERT FROM ASCII TO NUMBER
+            MOVE.B  D0,(A0)+                ; STORE DATA
+            ADDQ.L  #1,A1                   ; SKIP THE COMMA
+            DBRA.W  D2,.COPY
+            DBRA.W  D3,.LOOP
+            MOVE.B  #56,D0                  ; CLOSE FILE
+            TRAP    #15
+.END        ADD.L   #512,A7                 ; RESTORE STACK
             
             
             MOVEM.L (A7)+,D0-D7/A0-A6       ; RESTORES CONTENT REGISTERS
@@ -339,8 +399,7 @@ GRDPLOT
 .LOOPROWS   MOVE.W  #GRDWIDTH,D6
 *            CMP.B   #1,D5
 *            BEQ     .LOOPCLMS
-            MOVE.W  #BTLHOMRG-GRDSZCEL,D1 
-*            MOVE.W  #GRDMSWID,D1              
+            MOVE.W  #BTLHOMRG-GRDSZCEL,D1  
             MOVE.W  #0,D3
             ADD.W   #GRDSZCEL,D2
             ADD.W   #GRDSZCEL,D4
@@ -358,6 +417,8 @@ GRDPLOT
             MOVEM.L (A7)+,D0-D7/A0-A6       ; RESTORE CONTENT REGISTERS
      
             RTS
+
+
 
 
 
