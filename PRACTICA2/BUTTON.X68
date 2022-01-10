@@ -149,7 +149,7 @@ BTNPLOT
             
 .MOUSEOUT   MOVE.L  #CLRBLACK,D1            ; MOUSE OUTSIDE
             
-.SALIR      MOVE.B  #81,D0                  ; DRAW BUTTON
+.SALIR      MOVE.B  #81,D0                  ; SET FILL COLOR
             TRAP    #15
             
             MOVE.L  (A0),A1                 ; COPY @ SDB OF BUTTON
@@ -215,6 +215,7 @@ BTNPLOT
             
             RTS
                 
+
 *~Font name~Courier New~
 *~Font size~14~
 *~Tab type~0~

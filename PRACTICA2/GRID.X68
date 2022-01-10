@@ -322,7 +322,7 @@ GRDLRGT
             ;por la mitad y para ello sumando la mitad del grid a donde se guarda 
             ;tendría que funcionar
             ADD.W   D2,A0
-            ADD.W   #GRDWIDTH,A1            ;A1 contiene el doble or las comas
+            ADD.W   #GRDWIDTH,A1            ; A1 contiene el doble por las comas
 .COPY       MOVE.B  (A1)+,D0                ; PICK ONE LOADED CHARACTER
             SUB.B   #'0',D0                 ; CONVERT FROM ASCII TO NUMBER
             MOVE.B  D0,(A0)+                ; STORE DATA
@@ -350,6 +350,41 @@ GRDPLOT
 ; -----------------------------------------------------------------------------
 
 ; TODO : PLACE YOUR CODE HERE
+SETCURSOR   MACRO
+            CLR.L   D1
+            MOVE.B  #11,D0                  
+            MOVE.B  #\1,D1
+            LSL     #8,D1
+            MOVE.B  #\2,D1 
+            TRAP    #15
+            ENDM
+            
+SETFLLCLR   MACRO
+            CLR.L   D1
+            MOVE.B  #81,D0                  
+            MOVE.L  #\1,D1
+            TRAP    #15
+            ENDM
+            
+SETNUMBER   MACRO
+            CLR.L   D1
+            MOVE.B  #3,D0
+            MOVE.W  \1,D1                  
+            TRAP    #15
+            ENDM
+            
+SETPENCLR   MACRO
+            CLR.L   D1
+            MOVE.B  #80,D0
+            MOVE.L  #\1,D1
+            TRAP    #15
+            ENDM
+            
+PRINTCHAR   MACRO
+            MOVE.B  #6,D0                   ; TASK ID TO PRINT A CHARACTER
+            MOVE.B  #'*',D1                 ; CHARACTER TO PRINT
+            TRAP    #15                     ; PRINT
+            ENDM
 
             MOVEM.L D0-D7/A0-A6,-(A7)       ; SAVE CONTENT REGISTERS
             
@@ -369,23 +404,110 @@ GRDPLOT
 * GRDMSHEI   ; MASK TO GET Y FROM GRID OFFSET
 * GRDXOFF    ; X OFFSETS TO DISPLAY CENTERED GRID
 * GRDYOFF    ; Y OFFSET CENT. GRD
+* GRDSCP1X   ; PLAYER 1 SCORE X (CHAR RESOL.)
+* GRDSCP1Y   ; PLAYER 1 SCORE Y (CHAR RESOL.)
+* GRDSCP2X   ; PLAYER 2 SCORE X (CHAR RES.)
+* GRDSCP2Y   ; PLAYER 2 SCORE Y (CHAR RESOL.)
+* GRDSCNGX   ; NUM. GENER. X (CHAR RESOL.)
+* GRDSCNGY   ; NUM. GENER. Y (CHAR RESOL.)
 
             ;RECORRER MATRIZ E IR PINTADO
-            ;DIBUJAR LINEAS GRID
-            ; SET PEN COLOR
-            MOVE.B  #80,D0
-            MOVE.L  #CLRDKGRN,D1
-            TRAP    #15
-            
             ; SET PEN WIDTH/THICKNESS
             MOVE.B  #93,D0
             MOVE.L  #2,D1
             TRAP    #15
+            MOVE.W  #GRDHEIGH-1,D6
+            MOVE.W  #GRDWIDTH-1,D7
+            CLR.L   D6
+            CLR.L   D7
+            ; DRAW CELLS COLORS
+            MOVE.L  (GRDDST), A0 
+            MOVE.W  #0,D6
+.ROWS       CMP.W   #GRDHEIGH-1,D6
+            BEQ     .FINFOR1
+            MOVE.W  #0,D7   
+.CLMS       CMP.W   #GRDWIDTH-1,D7
+            BEQ     .FINFOR2
+            ;
+            MOVE.W  D6,D2
+            MOVE.W  D7,D1
+            MOVE.B  (A0)+,D5
+            CMP.B   #0,D5
+            BEQ     .VACIA
+            CMP.B   #1,D5
+            BEQ     .P1
+            ; CASILLA ROJA
+            SETFLLCLR CLRLTRED
+            BRA.W   .PAINT
+.P1         ; CASILLA AZUL
+            SETFLLCLR CLRLTBLU
+.VACIA      ; FONDO NEGRO
+            SETFLLCLR CLRBLACK
+.PAINT      CLR.L   D1
+            MOVE.B  D7,D1
+            MULU    #GRDSZCEL,D1
+            ADD.W   #GRDXOFF,D1
+            MOVE.W  D1,D3
+            ADD.W   #GRDSZCEL,D3
+            MOVE.W  D6,D2
+            MULU    #GRDSZCEL,D2
+            ADD.W   #GRDYOFF,D2
+            MOVE.W  D2,D4
+            ADD.W   #GRDSZCEL,D4
             
-            ;DRAW LINES
+            MOVE.B  #87,D0
+            TRAP    #15
+            ;
+            ADDQ.W  #1,D7
+            BRA.W   .CLMS
+.FINFOR2    ADDA.L  #GRDWIDTH,A0            ; @ NEXT ROW
+            ADDQ.W  #1,D6
+            BRA.W   .ROWS
+.FINFOR1    ;YA ESTA :D        
+            
+            ;SCORES
+            ; DRAW *
+            MOVE.W  (GRDNPLR1),D2
+            MOVE.W  (GRDNPLR2),D3
+            CMP.W   D2,D3 
+            BEQ     .EQUALS
+            BGT     .P2MRSCR                ; PLAYER1<PLAYER2
+            SETCURSOR GRDSCP1X,GRDSCP1Y-1   ; SET CURSOR
+            SETFLLCLR CLRLTBLU              ; SET FILL COLOR
+            BRA     .EXIT
+.P2MRSCR    SETCURSOR GRDSCP2X,GRDSCP2Y-1   ; SET CURSOR
+            SETFLLCLR CLRLTRED              ; SET FILL COLOR
+            BRA     .EXIT
+.EQUALS     SETCURSOR GRDSCP1X,GRDSCP1Y-1   ; SET CURSOR
+            SETFLLCLR CLRLTBLU              ; SET FILL COLOR
+            PRINTCHAR
+            SETCURSOR GRDSCP2X,GRDSCP2Y-1   ; SET CURSOR
+            SETFLLCLR CLRLTRED              ; SET FILL COLOR
+            PRINTCHAR
+.EXIT       ;PLAYER SCORES
+            SETPENCLR CLRWHITE              ; SET PEN COLOR       
+            ; PLAYER 1
+            SETCURSOR GRDSCP1X,GRDSCP1Y     ; SET CURSOR
+            SETFLLCLR CLRLTBLU              ; SET FILL COLOR
+            SETNUMBER D2                    ; WRITE NUMBER
+            
+            ; GENERATIONS
+            SETCURSOR GRDSCNGX,GRDSCNGY     ; SET CURSOR
+            SETFLLCLR CLRLTGRN              ; SET FILL COLOR
+            SETNUMBER (GRDNGEN)             ; WRITE NUMBER
+
+            ; PLAYER 2
+            SETCURSOR GRDSCP2X,GRDSCP2Y     ; SET CURSOR
+            SETFLLCLR CLRLTRED              ; SET FILL COLOR
+            SETNUMBER D3                    ; WRITE NUMBER
+            
+            ;GRID
+            SETPENCLR CLRDKGRN              ; SET PEN COLOR
+            
+            ; DRAW LINES
             MOVE.B  #84,D0
             
-            ;VERTICAL                       
+            ; VERTICAL                       
             MOVE.W  #GRDWIDTH,D5
             MOVE.W  #GRDXOFF,D1             ; X1
             MOVE.W  #GRDYOFF,D2             ; Y1
@@ -398,22 +520,22 @@ GRDPLOT
             MOVE.W  D1,D3               
             DBRA.W  D5,.LNVRTCL
             
-            ;HORIZONTAL
+            ; HORIZONTAL
             MOVE.W  #GRDHEIGH,D5
-            MOVE.W  #GRDXOFF,D1             ;X1
+            MOVE.W  #GRDXOFF,D1             ; X1 (Y1 SAME AS VERTICAL)
             MOVE.W  #GRDPXWID,D3
-            ADD.W   D1,D3
-            MOVE.W  #GRDYOFF,D4             ;Y2
+            ADD.W   D1,D3                   ; X2
+            MOVE.W  #GRDYOFF,D4             ; Y2
             
 .LNHRZNTL   TRAP    #15           
             ADD.W   #GRDSZCEL,D2
             MOVE.W  D2,D4
             DBRA.W  D5,.LNHRZNTL
-    
             
             MOVEM.L (A7)+,D0-D7/A0-A6       ; RESTORE CONTENT REGISTERS
      
             RTS
+
 
 
 
