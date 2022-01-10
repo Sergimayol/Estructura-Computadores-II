@@ -134,35 +134,24 @@ BTNPLOT
             MOVE.L  #BTNPENWD,D1
             TRAP    #15
             
-            ; Cambio de colores de los rectangulos
-            CMP.B   #0,4(A0)
-            BEQ     .MOUFUERA
+            CMP.B   #0,4(A0)                
+            BEQ     .MOUSEOUT
     
-*            BTST.B  #1,4(A0)
-            CMP.B   #2,4(A0) ;Creo que tendría que ser tambíen si ha sido pulsado
-*           CMP.B   #2||6,4(A0) 
-            BNE     .MOUPRESIONADO 
+            CMP.B   #2,4(A0) 
+            BEQ     .MOUPRESD 
     
-            ;Mouse encima del rectangulo   
+            ; MOUSE INSIDE   
             MOVE.L  #BTNSELCL,D1
-            MOVE.B  #81,D0
-            TRAP    #15
             BRA     .SALIR
               
-.MOUPRESIONADO            
-            ;Mouse presionando rectangulo
-            MOVE.L  #BTNPRSCL,D1
-            MOVE.B  #81,D0
-            TRAP    #15
+.MOUPRESD   MOVE.L  #BTNPRSCL,D1            ; MOUSE PRESSED
             BRA     .SALIR
             
-.MOUFUERA
-            ;Mouse fuera del rectangulo            
-            MOVE.L  #CLRBLACK,D1
-            MOVE.B  #81,D0
+.MOUSEOUT   MOVE.L  #CLRBLACK,D1            ; MOUSE OUTSIDE
+            
+.SALIR      MOVE.B  #81,D0                  ; DRAW BUTTON
             TRAP    #15
             
-.SALIR      
             MOVE.L  (A0),A1                 ; COPY @ SDB OF BUTTON
             CLR.L   D1
             
@@ -225,20 +214,7 @@ BTNPLOT
             MOVEM.L (A7)+,D0-D7/A0-A2       ; Restore content resgiters
             
             RTS
-                    
-
-
-
-
-
-
-
-
-
-
-
-
-
+                
 *~Font name~Courier New~
 *~Font size~14~
 *~Tab type~0~
