@@ -61,8 +61,84 @@ GRDMUPD
 
             MOVEM.L D0-D7/A0-A6,-(A7)
 
-
-            MOVEM.L (A7)+,D0-D7/A0-A6       
+            MOVE.W  MOUY,D0                 ; COPY MOUSE Y POSITION
+            MOVE.W  MOUX,D1                 ; COPY MOUSE X POSITION
+            
+            ; GET GRID POSITION
+            MOVE.W  #GRDYOFF,D2             ; TOP Y
+            MOVE.W  #GRDXOFF,D3             ; LEFT X
+            MOVE.W  #GRDHEIGH,D4            ; HEIGHT
+            MOVE.W  #GRDWIDTH,D5            ; WIDTH  
+            
+            ; IF D2<D0 MOUSE NOT INSIDE (IS UPPER THAN THE BUTTON)
+            CMP.W   D2,D0
+            BLT     .END
+            
+            ; IF D3<D1 MOUSE NOT INSIDE (IS ON THE LEFT SIDE)
+            CMP.W   D3,D1
+            BLT     .END
+            
+            ; IF D4>D0 MOUSE NOT INSIDE (IS LOWER THAN THE BUTTON)
+            ADD.W   D2,D4
+            CMP.W   D4,D0
+            BGT     .END
+            
+            ; IF D5>D0 MOUSE NOT INSIDE (IS ON THE RIGHT SIDE)
+            ADD.W   D3,D5
+            CMP.W   D5,D1
+            BGT     .END
+            
+            ;CALCULAR POS
+            MOVE.W  MOUY,D0                 ; COPY MOUSE Y POSITION
+            SUB.W   #GRDYOFF,D0
+            MOVE.W  MOUX,D1                 ; COPY MOUSE X POSITION
+            SUB.W   #GRDXOFF,D1
+            DIVU.W  #GRDSZCEL,D0
+            DIVU.W  #GRDSZCEL,D1
+            
+            MULU.W  #GRDWIDTH,D0
+            ADD.W   D1,D0
+            MOVE.W  D0,A0
+            
+            MOVE.L  GRDDST,A1
+            
+            ; COMPROBAR CLICK DER o IZQ
+            BTST    #0,MOUVAL
+            BEQ     .CLICKDER
+            BRA     .CALP1P2
+            
+.CLICKDER   BTST    #1,MOUVAL
+            BEQ     .END
+            BRA     .CLRCELL
+            
+.CALP1P2    MOVE.W  #(GRDWITH/2)-1,D2
+            CMP.W   D2,D1
+            BGT     .PLAYER2
+            
+.PLAYER1    CMP.B   #1,(A1,A0)              
+            BEQ     .END
+            ADD.W   #1,GRDNPLR1
+            MOVE.B  #1,(A1,A0)
+            BRA     .END
+            
+.PLAYER2    CMP.B   #2,(A1,A0)              
+            BEQ     .END
+            ADD.W   #1,GRDNPLR2
+            MOVE.B  #2,(A1,A0)
+            BRA     .END 
+         
+.CLRCELL    CMP.B   #0,(A1,A0)              
+            BEQ     .END
+            CMP.B   #1,(A1,A0)
+            BNE     .CLRP2
+            SUB.W   #1,GRDNPLR1
+.CLRP2      CMP.B   #2,(A1,A0)
+            BNE     .SETZERO 
+            SUB.W  #1,GRDNPLR2
+            
+.SETZERO    MOVE.B  #0,(A1,A0) 
+                       
+.END        MOVEM.L (A7)+,D0-D7/A0-A6       
             RTS
 
 ; -----------------------------------------------------------------------------
@@ -258,7 +334,10 @@ GRDLLEFT
             MOVE.W  #(GRDWIDTH/2)-1,D2      ; COPY HALF OF GRID
 .COPY       MOVE.B  (A1)+,D0                ; PICK ONE LOADED CHARACTER
             SUB.B   #'0',D0                 ; CONVERT FROM ASCII TO NUMBER
-            MOVE.B  D0,(A0)+                ; STORE DATA
+            CMP.W   #2,D0
+            BNE     .STORE
+            MOVE.W  #1,D0
+.STORE      MOVE.B  D0,(A0)+                ; STORE DATA
             ADDQ.L  #1,A1                   ; SKIP THE COMMA
             DBRA.W  D2,.COPY
             DBRA.W  D3,.LOOP
@@ -325,7 +404,10 @@ GRDLRGT
             ADD.W   #GRDWIDTH,A1            ; A1 contiene el doble por las comas
 .COPY       MOVE.B  (A1)+,D0                ; PICK ONE LOADED CHARACTER
             SUB.B   #'0',D0                 ; CONVERT FROM ASCII TO NUMBER
-            MOVE.B  D0,(A0)+                ; STORE DATA
+            CMP.W   #1,D0
+            BNE     .STORE
+            MOVE.W  #2,D0
+.STORE      MOVE.B  D0,(A0)+                ; STORE DATA
             ADDQ.L  #1,A1                   ; SKIP THE COMMA
             DBRA.W  D2,.COPY
             DBRA.W  D3,.LOOP
@@ -460,8 +542,7 @@ PRINTCHAR   MACRO
             ;
             ADDQ.W  #1,D7
             BRA.W   .CLMS
-.FINFOR2    ADDA.L  #GRDWIDTH,A0            ; @ NEXT ROW
-            ADDQ.W  #1,D6
+.FINFOR2    ADDQ.W  #1,D6
             BRA.W   .ROWS
 .FINFOR1    ;YA ESTA :D        
             
@@ -535,6 +616,10 @@ PRINTCHAR   MACRO
             MOVEM.L (A7)+,D0-D7/A0-A6       ; RESTORE CONTENT REGISTERS
      
             RTS
+
+
+
+
 
 
 
