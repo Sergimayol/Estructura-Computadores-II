@@ -59,7 +59,7 @@ MOUINIT
             MOVE.W  D1, MOUX
             SWAP    D1
             MOVE.W  D1, MOUY            
-            CLR.B   MOUEDGE                 ; clears MOUEDGE
+            CLR.B   MOUEDGE                  ; clears MOUEDGE
             MOVE.L  #MOUREAD,($80+MOUTRAP*4) ;Installs mouread into moutrap
             
             RTS
@@ -138,6 +138,7 @@ SCRUPD
             TRAP    #15
             MOVEM.W (A7)+,D0-D1
             RTE
+
 
 
 
