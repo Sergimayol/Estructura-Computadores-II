@@ -178,39 +178,6 @@ GRDRUPD
 ; MODIFIES : NONE
 ; -----------------------------------------------------------------------------
 
-; TODO : PLACE YOUR CODE HERE
-*            MOVEM.L D0-D7/A0-A6,-(A7)
-*
-*
-*        
-*
-*            MOVEM.L (A7)+,D0-D7/A0-A6       
-*            RTS
-            * cell offsets
-UL	EQU	-GRDWIDTH-1			Upper Left
-UM	EQU	-GRDWIDTH			Upper Middle
-UR	EQU	-GRDWIDTH+1			Upper Right
-L	EQU	-1			Left
-R	EQU	1			Right
-LL	EQU	GRDWIDTH-1			Lower Left
-LM	EQU	GRDWIDTH			Lower Middle
-LR	EQU	GRDWIDTH+1			Lower Right
-ULWRAP	EQU	-1			Upper Left Wrapped around to right edge
-URWRAP	EQU	-GRDWIDTH*2+1		    Upper Right Wrapped around to left edge
-LWRAP	EQU	GRDWIDTH-1			Left Wrapped around to right edge
-RWRAP	EQU	-GRDWIDTH+1			Right Wrapped around to left edge
-LLWRAP	EQU	GRDWIDTH*2-1		    Lower Left Wrapped around to right edge
-LRWRAP	EQU	1			Lower Right Wrapped around to left edge
-ULTWRAP     EQU     GRDWIDTH*GRDHEIGH-GRDWIDTH-1    Upper Left Wrapped around to low edge
-UMTWRAP     EQU     GRDWIDTH*GRDHEIGH-GRDWIDTH      Upper Middle wrapped around to low edge
-URTWRAP     EQU     GRDWIDTH*GRDHEIGH-GRDWIDTH+1    Upper Right wrapped around to low edge
-LLLWRAP     EQU     -ULTWRAP                        Lower Left wrapped around to top edge
-LMLWRAP     EQU     -UMTWRAP                        Lower Middle wrapped around to top edge
-LRLWRAP     EQU     -URTWRAP                        Lower Right wrapped around to top edge
-ULTLWRAP    EQU     GRDWIDTH*GRDHEIGH-1             Upper Left wrapped around to low-right corner
-LLLLWRAP    EQU     -GRDWIDTH*GRDHEIGH+GRDWIDTH-1   Lower Middle wrapped around to top-right corner
-URTRWRAP    EQU     GRDWIDTH*GRDHEIGH-GRDWIDTH+1    Upper Right wrapped around to low-left corner
-LRLRWRAP    EQU     -GRDWIDTH*GRDHEIGH+1            Lower Right wrapped around to top-left corner
             MOVEM.L D0-D7/A0-A6,-(A7)
 
             ADD.W   #1,GRDNGEN ;ADD 1 TO GEN COUNTER
@@ -267,174 +234,174 @@ LRLRWRAP    EQU     -GRDWIDTH*GRDHEIGH+1            Lower Right wrapped around t
             
             
  ;GET THE NEIGHTBOURS FROM TOP LEFT CONER CELL           
-.TLC        MOVE.B  (LWRAP,A0),D1
+.TLC        MOVE.B  (GRDWIDTH-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (R,A0),D1
+            MOVE.B  (1,A0),D1
             BSR     .CALCN
-            MOVE.B  (LLWRAP,A0),D1
+            MOVE.B  (GRDWIDTH*2-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (LM,A0),D1
+            MOVE.B  (GRDWIDTH,A0),D1
             BSR     .CALCN
-            MOVE.B  (LR,A0),D1
+            MOVE.B  (GRDWIDTH+1,A0),D1
             BSR     .CALCN
-            MOVE.B  (UMTWRAP,A0),D1
+            MOVE.B  (GRDWIDTH*GRDHEIGH-GRDWIDTH,A0),D1
             BSR     .CALCN
-            MOVE.B  (URTWRAP,A0),D1
+            MOVE.B  (GRDWIDTH*GRDHEIGH-GRDWIDTH+1,A0),D1
             BSR     .CALCN
-            MOVE.B  (ULTLWRAP,A0),D1
+            MOVE.B  (GRDWIDTH*GRDHEIGH-1,A0),D1
             BSR     .CALCN
             BRA     .SRULES
             
  ;GET THE NEIGHTBOURS FROM LEFT EDGE CELL CELLS            
-.MLC        MOVE.B  (LWRAP,A0),D1
+.MLC        MOVE.B  (GRDWIDTH-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (R,A0),D1
+            MOVE.B  (1,A0),D1
             BSR     .CALCN
-            MOVE.B  (LLWRAP,A0),D1
+            MOVE.B  (GRDWIDTH*2-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (LM,A0),D1
+            MOVE.B  (GRDWIDTH,A0),D1
             BSR     .CALCN
-            MOVE.B  (LR,A0),D1
+            MOVE.B  (GRDWIDTH+1,A0),D1
             BSR     .CALCN
-            MOVE.B  (UR,A0),D1
+            MOVE.B  (-GRDWIDTH+1,A0),D1
             BSR     .CALCN
-            MOVE.B  (UM,A0),D1
+            MOVE.B  (-GRDWIDTH,A0),D1
             BSR     .CALCN
-            MOVE.B  (ULWRAP,A0),D1
+            MOVE.B  (-1,A0),D1
             BSR     .CALCN
             BRA     .SRULES 
 
  ;GET THE NEIGHTBOURS FROM LOWER LEFT CONER CELL        
-.LLC        MOVE.B  (LWRAP,A0),D1
+.LLC        MOVE.B  (GRDWIDTH-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (R,A0),D1
+            MOVE.B  (1,A0),D1
             BSR     .CALCN
-            MOVE.B  (UM,A0),D1
+            MOVE.B  (-GRDWIDTH,A0),D1
             BSR     .CALCN
-            MOVE.B  (UR,A0),D1
+            MOVE.B  (-GRDWIDTH+1,A0),D1
             BSR     .CALCN
-            MOVE.B  (ULWRAP,A0),D1
+            MOVE.B  (-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (LMLWRAP,A0),D1
+            MOVE.B  (-(GRDWIDTH*GRDHEIGH-GRDWIDTH),A0),D1
             BSR     .CALCN
-            MOVE.B  (LRLWRAP,A0),D1
+            MOVE.B  (-(GRDWIDTH*GRDHEIGH-GRDWIDTH+1),A0),D1
             BSR     .CALCN
-            MOVE.B  (LLLLWRAP,A0),D1
+            MOVE.B  (-GRDWIDTH*GRDHEIGH+GRDWIDTH-1,A0),D1
             BSR     .CALCN
             BRA     .SRULES 
 
 
  ;GET THE NEIGHTBOURS FROM TOP EDGE CELLS 
-.TC         MOVE.B  (L,A0),D1
+.TC         MOVE.B  (-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (R,A0),D1
+            MOVE.B  (1,A0),D1
             BSR     .CALCN
-            MOVE.B  (LL,A0),D1
+            MOVE.B  (GRDWIDTH-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (LM,A0),D1
+            MOVE.B  (GRDWIDTH,A0),D1
             BSR     .CALCN
-            MOVE.B  (LR,A0),D1
+            MOVE.B  (GRDWIDTH+1,A0),D1
             BSR     .CALCN
-            MOVE.B  (ULTWRAP,A0),D1
+            MOVE.B  (GRDWIDTH*GRDHEIGH-GRDWIDTH-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (URTWRAP,A0),D1
+            MOVE.B  (GRDWIDTH*GRDHEIGH-GRDWIDTH+1,A0),D1
             BSR     .CALCN
-            MOVE.B  (UMTWRAP,A0),D1
+            MOVE.B  (GRDWIDTH*GRDHEIGH-GRDWIDTH,A0),D1
             BSR     .CALCN
             BRA     .SRULES 
 
  ;GET THE NEIGHTBOURS FROM TOP RIGHT CONER CELL  
-.TRC        MOVE.B  (L,A0),D1
+.TRC        MOVE.B  (-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (RWRAP,A0),D1
+            MOVE.B  (-GRDWIDTH+1,A0),D1
             BSR     .CALCN
-            MOVE.B  (LRWRAP,A0),D1
+            MOVE.B  (1,A0),D1
             BSR     .CALCN
-            MOVE.B  (LM,A0),D1
+            MOVE.B  (GRDWIDTH,A0),D1
             BSR     .CALCN
-            MOVE.B  (LL,A0),D1
+            MOVE.B  (GRDWIDTH-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (UMTWRAP,A0),D1
+            MOVE.B  (GRDWIDTH*GRDHEIGH-GRDWIDTH,A0),D1
             BSR     .CALCN
-            MOVE.B  (ULTWRAP,A0),D1
+            MOVE.B  (GRDWIDTH*GRDHEIGH-GRDWIDTH-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (URTRWRAP,A0),D1
+            MOVE.B  (GRDWIDTH*GRDHEIGH-GRDWIDTH+1,A0),D1
             BSR     .CALCN
             BRA     .SRULES    
  
  ;GET THE NEIGHTBOURS FROM RIGHT EDGE CELLS            
-.MRC        MOVE.B  (L,A0),D1
+.MRC        MOVE.B  (-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (RWRAP,A0),D1
+            MOVE.B  (-GRDWIDTH+1,A0),D1
             BSR     .CALCN
-            MOVE.B  (LL,A0),D1
+            MOVE.B  (GRDWIDTH-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (LM,A0),D1
+            MOVE.B  (GRDWIDTH,A0),D1
             BSR     .CALCN
-            MOVE.B  (LRWRAP,A0),D1
+            MOVE.B  (1,A0),D1
             BSR     .CALCN
-            MOVE.B  (UL,A0),D1
+            MOVE.B  (-GRDWIDTH-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (UM,A0),D1
+            MOVE.B  (-GRDWIDTH,A0),D1
             BSR     .CALCN
-            MOVE.B  (URWRAP,A0),D1
+            MOVE.B  (-GRDWIDTH*2+1,A0),D1
             BSR     .CALCN
             BRA     .SRULES 
 
  ;GET THE NEIGHTBOURS FROM LOWER RIGHT CONER CELL             
-.LRC        MOVE.B  (L,A0),D1
+.LRC        MOVE.B  (-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (RWRAP,A0),D1
+            MOVE.B  (-GRDWIDTH+1,A0),D1
             BSR     .CALCN
-            MOVE.B  (UL,A0),D1
+            MOVE.B  (-GRDWIDTH-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (UM,A0),D1
+            MOVE.B  (-GRDWIDTH,A0),D1
             BSR     .CALCN
-            MOVE.B  (URWRAP,A0),D1
+            MOVE.B  (-GRDWIDTH*2+1,A0),D1
             BSR     .CALCN
-            MOVE.B  (LLLWRAP,A0),D1
+            MOVE.B  (-(GRDWIDTH*GRDHEIGH-GRDWIDTH-1),A0),D1
             BSR     .CALCN
-            MOVE.B  (LMLWRAP,A0),D1
+            MOVE.B  (-(GRDWIDTH*GRDHEIGH-GRDWIDTH),A0),D1
             BSR     .CALCN
-            MOVE.B  (LRLRWRAP,A0),D1
+            MOVE.B  (-GRDWIDTH*GRDHEIGH+1,A0),D1
             BSR     .CALCN
             BRA     .SRULES   
 
  ;GET THE NEIGHTBOURS FROM LOW EDGE CELLS
-.LC         MOVE.B  (L,A0),D1
+.LC         MOVE.B  (-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (R,A0),D1
+            MOVE.B  (1,A0),D1
             BSR     .CALCN
-            MOVE.B  (UL,A0),D1
+            MOVE.B  (-GRDWIDTH-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (UM,A0),D1
+            MOVE.B  (-GRDWIDTH,A0),D1
             BSR     .CALCN
-            MOVE.B  (UR,A0),D1
+            MOVE.B  (-GRDWIDTH+1,A0),D1
             BSR     .CALCN
-            MOVE.B  (LLLWRAP,A0),D1
+            MOVE.B  (-(GRDWIDTH*GRDHEIGH-GRDWIDTH-1),A0),D1
             BSR     .CALCN
-            MOVE.B  (LRLWRAP,A0),D1
+            MOVE.B  (-(GRDWIDTH*GRDHEIGH-GRDWIDTH+1),A0),D1
             BSR     .CALCN
-            MOVE.B  (LMLWRAP,A0),D1
+            MOVE.B  (-(GRDWIDTH*GRDHEIGH-GRDWIDTH),A0),D1
             BSR     .CALCN
             BRA     .SRULES  
             
  ;GET THE NEIGHTBOURS FROM MID GRID CELLS              
-.MC         MOVE.B  (L,A0),D1
+.MC         MOVE.B  (-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (R,A0),D1
+            MOVE.B  (1,A0),D1
             BSR     .CALCN
-            MOVE.B  (LL,A0),D1
+            MOVE.B  (GRDWIDTH-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (LM,A0),D1
+            MOVE.B  (GRDWIDTH,A0),D1
             BSR     .CALCN
-            MOVE.B  (LR,A0),D1
+            MOVE.B  (GRDWIDTH+1,A0),D1
             BSR     .CALCN
-            MOVE.B  (UL,A0),D1
+            MOVE.B  (-GRDWIDTH-1,A0),D1
             BSR     .CALCN
-            MOVE.B  (UM,A0),D1
+            MOVE.B  (-GRDWIDTH,A0),D1
             BSR     .CALCN
-            MOVE.B  (UR,A0),D1
+            MOVE.B  (-GRDWIDTH+1,A0),D1
             BSR     .CALCN
             BRA     .SRULES
                 
@@ -522,6 +489,7 @@ LRLRWRAP    EQU     -GRDWIDTH*GRDHEIGH+1            Lower Right wrapped around t
             ADD.W   #1,GRDNPLR2
 .CLRC       CLR.B   (A0)+            
             DBRA.W  D0,.END
+            
             MOVEM.L (A7)+,D0-D7/A0-A6
             RTS
 
