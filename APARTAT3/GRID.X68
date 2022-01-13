@@ -178,62 +178,59 @@ GRDRUPD
 ; MODIFIES : NONE
 ; -----------------------------------------------------------------------------
 
-            MOVEM.L D0-D7/A0-A6,-(A7)
+            MOVEM.L D0-D7/A0-A6,-(A7)       ; SAVE CONTENT REGISTER
 
-            ADD.W   #1,GRDNGEN ;ADD 1 TO GEN COUNTER
-            CLR.W   GRDNPLR1 ;SET P1 COUNTER TO 0
-            CLR.W   GRDNPLR2 ;SET P2 COUNTER TO 0
+            ; INIT. COUNTERS
+            ADD.W   #1,GRDNGEN              ; INIT. GEN COUNTER TO 1
+            CLR.W   GRDNPLR1                ; INIT. PLR 1 CONT. TO 0
+            CLR.W   GRDNPLR2                ; INIT. PLR 2 CONT. TO 0
             
-            MOVE.L  GRDDST,D0
+            MOVE.L  GRDDST,D0               ; COPY @ TO SWAP THEM
             MOVE.L  GRDSRC,D1
-            MOVE.L  D0,GRDSRC
-            MOVE.L  D1,GRDDST ;SWITCH MATRIX POINTERS
-            MOVE.L  GRDSRC,A0 ;MOVE MATRIX SRC POINTER TO A0
-            MOVE.L  GRDDST,A1 ;MOVE MATRIX DST POINTER TO A1
+            MOVE.L  D0,GRDSRC               ; SWAP POINTERS
+            MOVE.L  D1,GRDDST               
+            MOVE.L  GRDSRC,A0               
+            MOVE.L  GRDDST,A1              
             CLR.L   D0
             CLR.L   D1
 
-
             MOVE.W  #GRDWIDTH,D6
             MULU.W  #GRDHEIGH,D6
-            SUB.W   #1,D6 ;D6 CONTAINS TOTAL NUMBER OF CELLS OF GRID FOR LOOP
-            MOVE.W  #0,D7 ;CELL COUNTER
+            SUB.W   #1,D6                   ; D6 = TOTAL NUM. CELLS
+            MOVE.W  #0,D7                   ; CELL COUNTER
 
-            
 .LOOP       CLR.W   D2
             CLR.W   D3
             MOVE.W  #GRDWIDTH,D0 
-            MULU.W  #GRDHEIGH,D0 ;D0 CONTAINS TOTAL NUMBER OF CELLS STARTING FROM 0
+            MULU.W  #GRDHEIGH,D0            ; D0 = TOTAL NUM. CELLS
             CLR.L   D5 
-            MOVE.W  D7,D5
-            DIVU.W  #GRDWIDTH,D5 ;GET ROW AND COL POS FROM ACTUAL CELL
-            SWAP.W  D5 ;SWAP COL TO LOW WORD
+            MOVE.W  D7,D5                   
+            DIVU.W  #GRDWIDTH,D5            ; POS. OF ACTUAL CELL (ROW & COL)
+            SWAP.W  D5                      ; MOVE COL. TO LOW PART
             
-            CMP.W   #0,D7 ;CHECK IF IT'S ON THE FIRST CELL (TOP LEFT CORNER)
-            BEQ     .TLC                    
-            MOVE.W  D0,D4
-            SUB.W   #GRDWIDTH,D4 ;GET THE FIRST CELL OF THE LAST ROW
-            CMP.W   D4,D7 ;CHECK IF ACT CELL IS ON THE LOW LEFT CORNER 
-            BEQ     .LLC
-            CMP.W   #0,D5 ;CHECH IF ACT CELL IS ON THE FIRST COL (LEFT SIDE GRID)
-            BEQ     .MLC
-            CMP.W   #GRDWIDTH,D7 ;CHECH IF ACT CELL IS ON THE FIRST ROW (TOP SIDE GRID)
-            BLT     .TC     
+            CMP.W   #0,D7                   ; FIRST CELL(TOP LEFT CORNER)?
+            BEQ     .TLC                    ; IF IT'S, GO TO TLC
+            MOVE.W  D0,D4                   
+            SUB.W   #GRDWIDTH,D4            ; GET LAST CELL OF FIRST COL.
+            CMP.W   D4,D7                   ; ACT CELL IS ON THE LOW LEFT CORNER? 
+            BEQ     .LLC                    ; IF IT'S, GO TO LLC
+            CMP.W   #0,D5                   ; ACT CELL ON FIRST COL(LEFT SIDE)?
+            BEQ     .MLC                    ; IF IT'S, GO TO MLC
+            CMP.W   #GRDWIDTH,D7            ; ACT CELL ON FIRST ROW(TOP SIDE)?
+            BLT     .TC                     ; ?, GO TO TC
             
-            CMP.W   #GRDWIDTH,D7 ;CHECH IF ACT CELL IS ON THE LAST CELL OF FIRST ROW (TOP RIGHT CORNER)
-            BEQ     .TRC
+            CMP.W   #GRDWIDTH,D7            ; ACT CELL ON TOP RIGHT CORNER?
+            BEQ     .TRC                    ; IF IT'S, GO TO TRC
             SUB.W   #1,D0
-            CMP.W   D0,D7 ;CHECH IF ACT CELL IS ON THE LAST CELL OF LAST ROW (LOW RIGHT CORNER)
-            BEQ     .LRC
-            CMP.W   #GRDWIDTH-1,D5 ;CHECH IF ACT CELL IS ON THE LAST COL (RIGHT SIDE GRID)
-            BEQ     .MRC
-            CMP.W   D4,D7 ;CHECH IF ACT CELL IS ON THE LAST ROW (LOW SIDE GRID)
-            BGT     .LC
-            BRA     .MC  ;OTHERWISE IT'S ON MIDDLE GRID
+            CMP.W   D0,D7                   ; ACT CELL ON LOW RIGHT CORNER?
+            BEQ     .LRC                    ; IF IT'S, GO TO LRC
+            CMP.W   #GRDWIDTH-1,D5          ; ACT CELL ON LAST COL(RIGHT SIDE)?
+            BEQ     .MRC                    ; IF IT'S, GO TO MRC
+            CMP.W   D4,D7                   ; ACT CELL ON LAST ROW(LOW SIDE)?
+            BGT     .LC                     ; ?, GO TO LC
+            BRA     .MC                     ; ACT CELL IT'S ON MIDDLE
             
-            
-            
- ;GET THE NEIGHTBOURS FROM TOP LEFT CONER CELL           
+ ; GET THE NEIGHTBOURS FROM TOP LEFT CONER CELL           
 .TLC        MOVE.B  (GRDWIDTH-1,A0),D1
             BSR     .CALCN
             MOVE.B  (1,A0),D1
@@ -252,7 +249,7 @@ GRDRUPD
             BSR     .CALCN
             BRA     .SRULES
             
- ;GET THE NEIGHTBOURS FROM LEFT EDGE CELL CELLS            
+ ; GET THE NEIGHTBOURS FROM LEFT EDGE CELL CELLS            
 .MLC        MOVE.B  (GRDWIDTH-1,A0),D1
             BSR     .CALCN
             MOVE.B  (1,A0),D1
@@ -271,7 +268,7 @@ GRDRUPD
             BSR     .CALCN
             BRA     .SRULES 
 
- ;GET THE NEIGHTBOURS FROM LOWER LEFT CONER CELL        
+ ; GET THE NEIGHTBOURS FROM LOWER LEFT CONER CELL        
 .LLC        MOVE.B  (GRDWIDTH-1,A0),D1
             BSR     .CALCN
             MOVE.B  (1,A0),D1
@@ -290,8 +287,7 @@ GRDRUPD
             BSR     .CALCN
             BRA     .SRULES 
 
-
- ;GET THE NEIGHTBOURS FROM TOP EDGE CELLS 
+ ; GET THE NEIGHTBOURS FROM TOP EDGE CELLS 
 .TC         MOVE.B  (-1,A0),D1
             BSR     .CALCN
             MOVE.B  (1,A0),D1
@@ -310,7 +306,7 @@ GRDRUPD
             BSR     .CALCN
             BRA     .SRULES 
 
- ;GET THE NEIGHTBOURS FROM TOP RIGHT CONER CELL  
+ ; GET THE NEIGHTBOURS FROM TOP RIGHT CONER CELL  
 .TRC        MOVE.B  (-1,A0),D1
             BSR     .CALCN
             MOVE.B  (-GRDWIDTH+1,A0),D1
@@ -329,7 +325,7 @@ GRDRUPD
             BSR     .CALCN
             BRA     .SRULES    
  
- ;GET THE NEIGHTBOURS FROM RIGHT EDGE CELLS            
+ ; GET THE NEIGHTBOURS FROM RIGHT EDGE CELLS            
 .MRC        MOVE.B  (-1,A0),D1
             BSR     .CALCN
             MOVE.B  (-GRDWIDTH+1,A0),D1
@@ -348,7 +344,7 @@ GRDRUPD
             BSR     .CALCN
             BRA     .SRULES 
 
- ;GET THE NEIGHTBOURS FROM LOWER RIGHT CONER CELL             
+ ; GET THE NEIGHTBOURS FROM LOWER RIGHT CONER CELL             
 .LRC        MOVE.B  (-1,A0),D1
             BSR     .CALCN
             MOVE.B  (-GRDWIDTH+1,A0),D1
@@ -367,7 +363,7 @@ GRDRUPD
             BSR     .CALCN
             BRA     .SRULES   
 
- ;GET THE NEIGHTBOURS FROM LOW EDGE CELLS
+ ; GET THE NEIGHTBOURS FROM LOW EDGE CELLS
 .LC         MOVE.B  (-1,A0),D1
             BSR     .CALCN
             MOVE.B  (1,A0),D1
@@ -386,7 +382,7 @@ GRDRUPD
             BSR     .CALCN
             BRA     .SRULES  
             
- ;GET THE NEIGHTBOURS FROM MID GRID CELLS              
+ ; GET THE NEIGHTBOURS FROM MID GRID CELLS              
 .MC         MOVE.B  (-1,A0),D1
             BSR     .CALCN
             MOVE.B  (1,A0),D1
@@ -405,24 +401,23 @@ GRDRUPD
             BSR     .CALCN
             BRA     .SRULES
                 
-.CALCN      CMP.B   #1,D1 ;CHECK IF NEIGHTBOUR IS P1 CELL                  
-            BEQ     .ADDNP1 ;ADD 1 TO P1 COUNTER IF SO
-            CMP.B   #2,D1 ;CHECK IF NEIGHTBOUR IS P2 CELL 
-            BEQ     .ADDNP2 ;ADD 1 TO P2 COINTER IF SO
-            RTS ;RETURN TO GET NEXT NEIGHTBOUR
-.ADDNP1     ADD.W   #1,D2 ;ADD 1 TO NP1 COUNTER 
+.CALCN      CMP.B   #1,D1                   ; NEIGHTBOUR IS P1 CELL?                  
+            BEQ     .ADDNP1                 ; IF IT'S, ADD 1 TO P1 COUNTER
+            CMP.B   #2,D1                   ; NEIGHTBOUR IS P2 CELL? 
+            BEQ     .ADDNP2                 ; IF IT'S, ADD 1 TO P2 COUNTER
+            RTS                             ; RETURN TO NEXT NEIGHTBOUR
+.ADDNP1     ADD.W   #1,D2                   ; ADD 1 TO NP1 COUNTER 
             RTS
-.ADDNP2     ADD.W   #1,D3 ;ADD 1 TO NP2 COUNTER   
+.ADDNP2     ADD.W   #1,D3                   ; ADD 1 TO NP2 COUNTER   
             RTS
-                        
 
-.SRULES     CMP.B   #0,(A0) ;CHECK IF ACTUAL CELL IS A DEAD CELL
-            BEQ     .BRULES ;GO TO BIRTH RULES IF SO
-            CMP.B   #1,(A0) ;CHECK IF ACTUAL CELL IS P1 CELL
-            BNE     .P2R ;GO TO P2 RULES                    
-            MOVE.W  D2,D4 ;MOVE P1 NEIGHTBOURS TO D4
-            SUB.W   D3,D4 ;SUB P2 NEIGHTBOURS TO P1 NEIGHTBOURS
-            CMP.W   #3,D4 ;CHECK IF NP1-
+.SRULES     CMP.B   #0,(A0)                 ; IS ACT CELL IS A DEAD CELL?
+            BEQ     .BRULES                 ; IF IT'S, GO TO BIRTH RULES
+            CMP.B   #1,(A0)                 ; ACT CELL IS P1 CELL?
+            BNE     .P2R                    ; IF IT'S, GO TO P2 RULES                    
+            MOVE.W  D2,D4                   ; MOVE P1 NEIGHTBOURS TO D4
+            SUB.W   D3,D4                   ; SUB P2 NEIGHTBOURS TO P1 NEIGHTBOURS
+            CMP.W   #3,D4                   ; NP1-?
             BEQ     .CTOP1
             CMP.W   #2,D4 
             BEQ     .CTOP1
@@ -470,12 +465,10 @@ GRDRUPD
             
             MOVE.B  D1,(A1)  
 
-  
 .ENDLOOP    ADD.L   #1,A0
             ADD.L   #1,A1
             ADD.W   #1,D7
             DBRA    D6,.LOOP
-
 
             MOVE.W  #GRDWIDTH*GRDHEIGH-1,D0
             MOVE.L  GRDSRC,A0
@@ -892,7 +885,7 @@ PLOTCEL     MACRO
             
 .SKIP               
             ;GRID
-            SETPENCLR CLRDKGRN              ; SET PEN COLOR
+*            SETENCLR CLRDKGRN              ; SET PEN COLOR
             
             ; DRAW LINES
             MOVE.B  #84,D0
@@ -927,6 +920,8 @@ PLOTCEL     MACRO
             RTS  
             
             
+
+
 
 
 *~Font name~Courier New~
