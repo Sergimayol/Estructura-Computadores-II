@@ -726,170 +726,123 @@ GRDPLOT
 ; OUTPUT   : NONE
 ; MODIFIES : NONE
 ; -----------------------------------------------------------------------------
-
-; TODO : PLACE YOUR CODE HERE
-SETCURSOR   MACRO
-            CLR.L   D1
-            CLR.L   D0
-            MOVE.B  #11,D0                  
-            MOVE.B  #\1,D1
-            LSL.W   #8,D1
-            MOVE.B  #\2,D1 
-            TRAP    #15
-            CLR.L   D1
-            CLR.L   D0
-            ENDM
-            
-SETFLLCLR   MACRO
-            CLR.L   D1
-            CLR.L   D0
-            MOVE.B  #81,D0                  
-            MOVE.L  #\1,D1
-            TRAP    #15
-            CLR.L   D1
-            CLR.L   D0
-            ENDM
-            
-SETNUMBER   MACRO
-            CLR.L   D1
-            CLR.L   D0
-            MOVE.B  #3,D0
-            MOVE.W  \1,D1                  
-            TRAP    #15
-            CLR.L   D1
-            CLR.L   D0
-            ENDM
-            
-SETPENCLR   MACRO
-            CLR.L   D1
-            CLR.L   D0
-            MOVE.B  #80,D0
-            MOVE.L  #\1,D1
-            TRAP    #15
-            CLR.L   D1
-            CLR.L   D0
-            ENDM
-            
-PRINTCHAR   MACRO
-            CLR.L   D1
-            CLR.L   D0
-            MOVE.B  #6,D0                   
-            MOVE.B  #'*',D1                 
+            ; MACROS
+SETCURSOR   MACRO 
+            MOVE.W  #\1,D1
+            LSL.W   #8,D1          
+            MOVE.B  #\2,D1
+            MOVE.L  #11,D0
             TRAP    #15 
+            ENDM
+SETFLLCLR   MACRO
+            MOVEM.L D0-D1,-(A7)
+            MOVE.L  #\1,D1
+            MOVE.B  #81,D0                  
+            TRAP    #15                     
+            MOVEM.L (A7)+,D0-D1
+            ENDM
+DSPLYCONT   MACRO
             CLR.L   D1
-            CLR.L   D0                    
+            MOVE.W  (\1),D1
+            MOVE.L  #3,D0
+            TRAP    #15 
             ENDM
-            
-PLOTCEL     MACRO
-            MOVEM.L  D0-D4/A1,-(A7)
-            CMP.B   #1,-(A1)
-            BNE     .P2CEL
-            SETFLLCLR CLRLTBLU
-            BRA     .DRAW
-.P2CEL      SETFLLCLR CLRLTRED
-            
-.DRAW       
-            MOVE.B  D7,\1
-            MULU    #GRDSZCEL,\1
-            ADD.W   #GRDXOFF,\1
-            MOVE.W  \1,\3
-            ADD.W   #GRDSZCEL,\3
-            MOVE.W  D6,\2
-            MULU    #GRDSZCEL,\2
-            ADD.W   #GRDYOFF,\2
-            MOVE.W  \2,\4
-            ADD.W   #GRDSZCEL,\4
-            
-            MOVEM.L (A7)+,D0-D4/A1
-            
+PRNTCHR     MACRO
+            CLR.L   (A1)
+            MOVE.W  .CHARPRNT,(A1)
+            MOVE.W  #\1*8,D1
+            MOVE.W  #\2*13,D2
+            MOVE.L  #95,D0
+            TRAP    #15 
             ENDM
+            ; END OF MACROS
             
-            MOVEM.L D0-D7/A0-A6,-(A7)       ; SAVE CONTENT REGISTERS
+            MOVEM.L D0-D7/A0,-(A7)          ; SAVE CONTENT REGISTER
             
-            ; SET PEN WIDTH/THICKNESS
+            ; SET PEN WIDTH
+            MOVE.L  #1,D1
             MOVE.B  #93,D0
-            MOVE.L  #2,D1
-            TRAP    #15
+            TRAP    #15 
             
-            ;SCORES
-            ; DRAW *
-            MOVE.W  (GRDNPLR1),D2
-            MOVE.W  (GRDNPLR2),D3
-            CMP.W   D2,D3 
-            BEQ     .EQUALS
-            BGT     .P2MRSCR                ; PLAYER1<PLAYER2
-            SETCURSOR GRDSCP1X,GRDSCP1Y-1   ; SET CURSOR
-            SETFLLCLR CLRLTBLU              ; SET FILL COLOR
-            PRINTCHAR
+            MOVE.W  GRDNPLR1,D1
+            CMP.W   GRDNPLR2,D1             ; WHO IS WINNING?
+            BEQ     .EQUALS                 ; TIE
+            BLT     .P2MRSCR                ; P1<P2, P2 WINS
+            SETFLLCLR CLRLTBLU              ; SET FILL COLOR                       
+            PRNTCHR GRDSCP1X,GRDSCP1Y       ; PRINT '*'
+            BRA     .EXIT     
+.P2MRSCR    SETFLLCLR CLRLTRED              ; SET FILL COLOR
+            PRNTCHR GRDSCP2X,GRDSCP2Y       ; PRINT '*'
             BRA     .EXIT
-.P2MRSCR    SETCURSOR GRDSCP2X,GRDSCP2Y-1   ; SET CURSOR
+.EQUALS     SETFLLCLR CLRLTBLU              ; SET FILL COLOR
+            PRNTCHR GRDSCP1X,GRDSCP1Y       ; PRINT '*'
             SETFLLCLR CLRLTRED              ; SET FILL COLOR
-            PRINTCHAR
-            BRA     .EXIT
-.EQUALS     SETCURSOR GRDSCP1X,GRDSCP1Y-1   ; SET CURSOR
-            SETFLLCLR CLRLTBLU              ; SET FILL COLOR
-            PRINTCHAR
-            SETCURSOR GRDSCP2X,GRDSCP2Y-1   ; SET CURSOR
-            SETFLLCLR CLRLTRED              ; SET FILL COLOR
-            PRINTCHAR
-.EXIT       ;PLAYER SCORES
-            SETPENCLR CLRWHITE              ; SET PEN COLOR       
-            ; PLAYER 1
-            SETCURSOR GRDSCP1X,GRDSCP1Y     ; SET CURSOR
-            SETFLLCLR CLRLTBLU              ; SET FILL COLOR
-            SETNUMBER D2                    ; WRITE NUMBER
-            
+            PRNTCHR GRDSCP2X,GRDSCP2Y       ; PRINT '*'
+            ;PLOT SCORES
+.EXIT       ; PLAYER 1
+            SETCURSOR GRDSCP1X,GRDSCP1Y     ; SET CURSOR                  
+            SETFLLCLR CLRLTBLU              ; SET FILL COLOR 
+            DSPLYCONT GRDNPLR1              ; PLOT CONT NUMBER
             ; GENERATIONS
-            SETCURSOR GRDSCNGX,GRDSCNGY     ; SET CURSOR
-            SETFLLCLR CLRLTGRN              ; SET FILL COLOR
-            SETNUMBER (GRDNGEN)             ; WRITE NUMBER
-
+            SETCURSOR GRDSCNGX,GRDSCNGY     ; SET CURSOR                  
+            SETFLLCLR CLRMDGRN              ; SET FILL COLOR 
+            DSPLYCONT GRDNGEN               ; PLOT CONT NUMBER
             ; PLAYER 2
-            SETCURSOR GRDSCP2X,GRDSCP2Y     ; SET CURSOR
-            SETFLLCLR CLRLTRED              ; SET FILL COLOR
-            SETNUMBER D3                    ; WRITE NUMBER
-            
-            MOVE.L  (GRDDST),D1
-            MOVE.L  D1,A1
-            CLR.L   D1
-            CLR.W   D5 ;CELL COUNTER
-            CLR.W   D3 ;COL COUNTER
-            CLR.W   D4 ;ROW COUNTER
-            MOVE.W  #GRDYOFF,D2 ;TOP Y GRID POS
-            MOVE.W  #GRDXOFF,D1 ;LEFT X GRID POS
-            MOVE.W  #GRDWIDTH,D6 ;NUM OF COL
-            MOVE.W  D6,D7
-            MULU.W  #GRDHEIGH,D7 TOTAL N OF CELLS
-            
-            
-.CHKCEL     CMP.W   D7,D5
-            BEQ     .SKIP
-            CMP     #0,D5
-            BEQ     .NEXTCOL
+            SETCURSOR GRDSCP2X,GRDSCP2Y     ; SET CURSOR        
+            SETFLLCLR CLRLTRED              ; SET FILL COLOR 
+            DSPLYCONT GRDNPLR2              ; PLOT CONT NUMBER
+            ; DRAW CELLS
+            MOVE.L  (GRDDST), A0            ; COPY @ OF GRDDST
+            CLR.L   D3                      ; COLMN COUNTER
+            CLR.L   D4                      ; ROW COUNTER
+            CLR.L   D5                      ; CELL COUNTER
+            MOVE.W  #GRDYOFF,D2             ; TOP Y 
+            MOVE.W  #GRDXOFF,D1             ; LEFT X 
+            MOVE.W  #GRDWIDTH,D6            ; NUM. COLS
+            MOVE.W  #GRDWIDTH,D7
+            MULU.W  #GRDHEIGH,D7            ; TOTAL CELLS
+.STRT       CMP.W   D7,D5                   ; ALL CELL PAINTED?
+            BEQ     .DRWGRID                ; IF IT'S, DRAW GRID
+            CMP     #0,D5                   ; IF NOT,PAINT CELLS 
+            BEQ     .CLMN                   
             ADDQ.W  #1,D3
-.NEXTCOL    ADDQ.W  #1,D5
+.CLMN       ADDQ.W  #1,D5
             CMP.W   D6,D3    
-            BGE     .NEXTROW
-            CMP.B   #0,(A1)+
-            BEQ     .CHKCEL
-            BRA     .PAINTCEL
-            
-.NEXTROW    ADDQ.W  #1,D4
-            CLR.W   D3 ;RESET COL COUNTER
-            CMP.B   #0,(A1)+
-            BEQ     .CHKCEL
-            BRA     .PAINTCEL
-            
-.PAINTCEL   PLOTCEL D1,D2,D3,D4
-            BRA     .CHKCEL
-            
-.SKIP               
-            ;GRID
-*            SETENCLR CLRDKGRN              ; SET PEN COLOR
-            
+            BGE     .ROW
+            CMP.B   #0,(A0)+                ; EMPTY CELL?
+            BEQ     .STRT                   ; IF IT'S, NEXT CELL
+            BRA     .DWCL                   ; IF NOT, DRAW CELL
+.ROW        ADDQ.W  #1,D4                   ; NEW ROW
+            CLR.W   D3                      ; NEW COLUMN
+            CMP.B   #0,(A0)+                ; EMPTY CELL?
+            BEQ     .STRT                   ; IF IT'S, NEXT CELL
+            BRA     .DWCL                   ; IF NOT, DRAW CELL
+.DWCL       MOVEM.L  D0-D4/A0,-(A7)
+            CMP.B   #1,-(A0)                ; WHOSE PLAYER CELL?
+            BEQ     .P1CEL                  ; IF IT'S 1 = PLYR 1
+            SETFLLCLR  CLRLTRED             ; SET FILL COLOR
+            BRA     .DRAW                   ; JMP TO PLOT CELL
+.P1CEL      SETFLLCLR  CLRLTBLU             ; SET FILL COLOR
+.DRAW       ; CALC CELL POS. & DRAW IT 
+            MULU.W  #GRDSZCEL,D3
+            MULU.W  #GRDSZCEL,D4
+            ADD.W   D1,D3
+            MOVE.W  D3,D1                   ; X1
+            ADD.W   #GRDSZCEL,D3            ; X2
+            ADD.L   D2,D4
+            MOVE.W  D4,D2                   ; Y1
+            ADD.W   #GRDSZCEL,D4            ; Y2
+            MOVE.W  #87,D0
+            TRAP    #15
+            MOVEM.L (A7)+,D0-D4/A0
+            BRA     .STRT
+.DRWGRID    ;DRAW GRID
+            ; SET PEN COLOR              
+            MOVE.B  #80,D0
+            MOVE.L  #CLRDKGRN,D1
+            TRAP    #15
             ; DRAW LINES
             MOVE.B  #84,D0
-            
             ; VERTICAL                       
             MOVE.W  #GRDWIDTH,D5
             MOVE.W  #GRDXOFF,D1             ; X1
@@ -897,30 +850,26 @@ PLOTCEL     MACRO
             MOVE.W  #GRDXOFF,D3             ; X2
             MOVE.W  #GRDPXHEI,D4
             ADD.W   D2,D4                   ; Y2
-            
 .LNVRTCL    TRAP    #15
             ADD.W   #GRDSZCEL,D1
             MOVE.W  D1,D3               
             DBRA.W  D5,.LNVRTCL
-            
             ; HORIZONTAL
             MOVE.W  #GRDHEIGH,D5
             MOVE.W  #GRDXOFF,D1             ; X1 (Y1 SAME AS VERTICAL)
             MOVE.W  #GRDPXWID,D3
             ADD.W   D1,D3                   ; X2
             MOVE.W  #GRDYOFF,D4             ; Y2
-            
 .LNHRZNTL   TRAP    #15           
             ADD.W   #GRDSZCEL,D2
             MOVE.W  D2,D4
             DBRA.W  D5,.LNHRZNTL
             
-            MOVEM.L (A7)+,D0-D7/A0-A6       ; RESTORE CONTENT REGISTERS
-     
-            RTS  
+            MOVEM.L (A7)+,D0-D7/A0
+            RTS
+ 
+.CHARPRNT   DC.B    '*',0
             
-            
-
 
 
 
