@@ -56,15 +56,80 @@ GRDMUPD
 ; MODIFIES : NONE
 ; -----------------------------------------------------------------------------
 
-; TODO : PLACE YOUR CODE HERE
+            MOVEM.L D0-D7/A0-A6,-(A7)       ; SAVE CONTENT REGISTERS
 
-
-            MOVEM.L D0-D7/A0-A6,-(A7)
-
-
-            MOVEM.L (A7)+,D0-D7/A0-A6       
+            MOVE.W  MOUY,D0                 ; COPY MOUSE Y POSITION
+            MOVE.W  MOUX,D1                 ; COPY MOUSE X POSITION
+            ;MOUSE INSIDE?
+            ; GET GRID POSITION
+            MOVE.W  #GRDYOFF,D2             ; TOP Y
+            MOVE.W  #GRDXOFF,D3             ; LEFT X
+            ; IF D2<D0 MOUSE NOT INSIDE (IS UPPER THAN THE BUTTON)
+            CMP.W   D2,D0
+            BLT     .END
+            ; IF D3<D1 MOUSE NOT INSIDE (IS ON THE LEFT SIDE)
+            CMP.W   D3,D1
+            BLT     .END
+            ; IF D4>D0 MOUSE NOT INSIDE (IS LOWER THAN THE BUTTON)
+            MOVE.W  D2,D4
+            ADD.W   #GRDPXHEI,D4            ; BOTTOM Y
+            SUB.W   #1,D4
+            CMP.W   D4,D0
+            BGT     .END
+            ; IF D5>D0 MOUSE NOT INSIDE (IS ON THE RIGHT SIDE)
+            MOVE.W  D3,D5
+            ADD.W   #GRDPXWID,D5             ; RIGHT X
+            SUB.W   #1,D5
+            CMP.W   D5,D1
+            BGT     .END
+            CLR.L   D0
+            CLR.L   D1
+            ; CALCULATE CELL POSITION
+            MOVE.W  MOUY,D0                ; COPY MOUSE Y POSITION
+            SUB.W   #GRDYOFF,D0
+            MOVE.W  MOUX,D1                ; COPY MOUSE X POSITION
+            SUB.W   #GRDXOFF,D1
+            DIVU.W  #GRDSZCEL,D0
+            DIVU.W  #GRDSZCEL,D1
+            MULU.W  #GRDWIDTH,D0
+            ADD.W   D1,D0
+            MOVE.W  D0,A0 
+            MOVE.L  (GRDDST), A1
+            ; CHECK CLICK(RIGHT OR LEFT)
+            BTST    #0,MOUVAL
+            BEQ     .RGHTCLK
+            BRA     .PLYR1R2
+.RGHTCLK    BTST    #1,MOUVAL 
+            BEQ     .END
+            BRA     .CLRCELL
+.PLYR1R2    MOVE.W  #(GRDWIDTH/2)-1,D2      ; D2= HALF GRID
+            CMP.W   D2,D1                   ; CHECK WHICH PLAYER IS
+            BGT     .PLAYER2                
+            ; PLAYER 1
+            CMP.B   #1,(A1,A0)              ; CELL ALREADY CREATED?                   
+            BEQ     .END                    ; IF IT IS, RETURN
+            ADD.W   #1,GRDNPLR1             ; IF NOT,ADD 1 TO COUNTER
+            MOVE.B  #1,(A1,A0)              ; AND CREATE CELL
+            BRA     .END
+            ; PLAYER 2
+.PLAYER2    CMP.B   #2,(A1,A0)              ; CELL ALREADY CREATED?              
+            BEQ     .END                    ; IF IT IS, RETURN
+            ADD.W   #1,GRDNPLR2             ; IF NOT,ADD 1 TO COUNTER
+            MOVE.B  #2,(A1,A0)              ; AND CREATE CELL
+            BRA     .END 
+.CLRCELL    CMP.B   #0,(A1,A0)              ; CELL ALREADY CREATED?          
+            BEQ     .END                    ; IF IT IS, RETURN
+            CMP.B   #1,(A1,A0)              ; CHECK IF CELL IS P1
+            BNE     .CLRPLR2                ; IF NOT, CLEAR P2 CELL
+            SUB.W   #1,GRDNPLR1             ; SUB 1 FROM P1 COUNTER
+.CLRPLR2    CMP.B   #2,(A1,A0)              ; CHECK IF CELL IS P2
+            BNE     .SETZERO                ; IF NOT REMOVE CELL
+            SUB.W  #1,GRDNPLR2              ; SUB 1 FROM P2 COUNTER
+.SETZERO    MOVE.B  #0,(A1,A0)              ; SET CELL TO 0(DEAD)
+                       
+.END        MOVEM.L (A7)+,D0-D7/A0-A6       ; RESTORE CONTENT REGISTERS
             RTS
-
+            
 ; -----------------------------------------------------------------------------
 GRDRUPD
 ; UPDATES THE GRID ACCORDING TO 2-PLAYER GAME OF LIFE RULES AS FOLLOWS:
@@ -98,16 +163,300 @@ GRDRUPD
 ; MODIFIES : NONE
 ; -----------------------------------------------------------------------------
 
-; TODO : PLACE YOUR CODE HERE
+            MOVEM.L D0-D7/A0-A6,-(A7)       ; SAVE CONTENT REGISTER
 
-            MOVEM.L D0-D7/A0-A6,-(A7)
+            ; INIT. COUNTERS
+            ADD.W   #1,GRDNGEN              ; INIT. GEN COUNTER TO 1
+            CLR.W   GRDNPLR1                ; INIT. PLR 1 CONT. TO 0
+            CLR.W   GRDNPLR2                ; INIT. PLR 2 CONT. TO 0
+            MOVE.L  GRDDST,D0               ; COPY @ TO SWAP THEM
+            MOVE.L  GRDSRC,D1
+            MOVE.L  D0,GRDSRC               ; SWAP POINTERS
+            MOVE.L  D1,GRDDST               
+            MOVE.L  GRDSRC,A0               
+            MOVE.L  GRDDST,A1              
+            CLR.L   D0
+            CLR.L   D1
+            MOVE.W  #GRDWIDTH,D6
+            MULU.W  #GRDHEIGH,D6
+            SUB.W   #1,D6                   ; D6 = TOTAL NUM. CELLS
+            MOVE.W  #0,D7                   ; CELL COUNTER
+.LOOP       CLR.W   D2
+            CLR.W   D3
+            MOVE.W  #GRDWIDTH,D0 
+            MULU.W  #GRDHEIGH,D0            ; D0 = TOTAL NUM. CELLS
+            CLR.L   D5 
+            MOVE.W  D7,D5                   
+            DIVU.W  #GRDWIDTH,D5            ; POS. OF ACTUAL CELL (ROW & COL)
+            SWAP.W  D5                      ; MOVE COL. TO LOW PART
+            CMP.W   #0,D7                   ; FIRST CELL(TOP LEFT CORNER)?
+            BEQ     .TPLFTCRN               ; IF IT'S, GO TO TPLFTCRN
+            MOVE.W  D0,D4                   
+            SUB.W   #GRDWIDTH,D4            ; GET LAST CELL OF FIRST COL.
+            CMP.W   D4,D7                   ; ACT CELL IS ON THE LOW LEFT CORNER? 
+            BEQ     .LWLFTCRN               ; IF IT'S, GO TO LWLFTCRN
+            CMP.W   #0,D5                   ; ACT CELL ON FIRST COL(LEFT SIDE)?
+            BEQ     .FTLFTCOL               ; IF IT'S, GO TO FTLFTCOL
+            CMP.W   #GRDWIDTH,D7            ; ACT CELL ON FIRST ROW(TOP SIDE)?
+            BLT     .TPFSTROW               ; ?, GO TO TPFSTROW
+            CMP.W   #GRDWIDTH,D7            ; ACT CELL ON TOP RIGHT CORNER?
+            BEQ     .TPRGTCRN               ; IF IT'S, GO TO TPRGTCRN
+            SUB.W   #1,D0
+            CMP.W   D0,D7                   ; ACT CELL ON LOW RIGHT CORNER?
+            BEQ     .LWRGTCRN               ; IF IT'S, GO TO LWRGTCRN
+            CMP.W   #GRDWIDTH-1,D5          ; ACT CELL ON LAST COL(RIGHT SIDE)?
+            BEQ     .LTRGTCOL               ; IF IT'S, GO TO LTRGTCOL
+            CMP.W   D4,D7                   ; ACT CELL ON LAST ROW(LOW SIDE)?
+            BGT     .LWLSTROW               ; ?, GO TO LWLSTROW
+            BRA     .MDLPRTGD               ; ACT CELL IT'S ON MIDDLE
+            
+ ; GET THE NEIGHTBOURS FROM TOP LEFT CORNER CELL           
+.TPLFTCRN   MOVE.B  (GRDWIDTH-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH*2-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH+1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH*GRDHEIGH-GRDWIDTH,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH*GRDHEIGH-GRDWIDTH+1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH*GRDHEIGH-1,A0),D1
+            BSR     .SURVLRLS
+            BRA     .UPDGRDCL
+            
+ ; GET THE NEIGHTBOURS FROM LEFT EDGE CELL CELLS            
+.FTLFTCOL   MOVE.B  (GRDWIDTH-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH*2-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH+1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH+1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-1,A0),D1
+            BSR     .SURVLRLS
+            BRA     .UPDGRDCL 
 
+ ; GET THE NEIGHTBOURS FROM LOWER LEFT CONER CELL        
+.LWLFTCRN   MOVE.B  (GRDWIDTH-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH+1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-(GRDWIDTH*GRDHEIGH-GRDWIDTH),A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-(GRDWIDTH*GRDHEIGH-GRDWIDTH+1),A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH*GRDHEIGH+GRDWIDTH-1,A0),D1
+            BSR     .SURVLRLS
+            BRA     .UPDGRDCL 
 
-        
+ ; GET THE NEIGHTBOURS FROM TOP EDGE CELLS 
+.TPFSTROW   MOVE.B  (-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH+1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH*GRDHEIGH-GRDWIDTH-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH*GRDHEIGH-GRDWIDTH+1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH*GRDHEIGH-GRDWIDTH,A0),D1
+            BSR     .SURVLRLS
+            BRA     .UPDGRDCL 
 
-            MOVEM.L (A7)+,D0-D7/A0-A6       
+ ; GET THE NEIGHTBOURS FROM TOP RIGHT CONER CELL  
+.TPRGTCRN   MOVE.B  (-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH+1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH*GRDHEIGH-GRDWIDTH,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH*GRDHEIGH-GRDWIDTH-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH*GRDHEIGH-GRDWIDTH+1,A0),D1
+            BSR     .SURVLRLS
+            BRA     .UPDGRDCL    
+ 
+ ; GET THE NEIGHTBOURS FROM RIGHT EDGE CELLS            
+.LTRGTCOL   MOVE.B  (-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH+1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH*2+1,A0),D1
+            BSR     .SURVLRLS
+            BRA     .UPDGRDCL 
+
+ ; GET THE NEIGHTBOURS FROM LOWER RIGHT CONER CELL             
+.LWRGTCRN   MOVE.B  (-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH+1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH*2+1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-(GRDWIDTH*GRDHEIGH-GRDWIDTH-1),A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-(GRDWIDTH*GRDHEIGH-GRDWIDTH),A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH*GRDHEIGH+1,A0),D1
+            BSR     .SURVLRLS
+            BRA     .UPDGRDCL   
+
+ ; GET THE NEIGHTBOURS FROM LOW EDGE CELLS
+.LWLSTROW   MOVE.B  (-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH+1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-(GRDWIDTH*GRDHEIGH-GRDWIDTH-1),A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-(GRDWIDTH*GRDHEIGH-GRDWIDTH+1),A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-(GRDWIDTH*GRDHEIGH-GRDWIDTH),A0),D1
+            BSR     .SURVLRLS
+            BRA     .UPDGRDCL  
+            
+ ; GET THE NEIGHTBOURS FROM MID GRID CELLS              
+.MDLPRTGD   MOVE.B  (-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (GRDWIDTH+1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH-1,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH,A0),D1
+            BSR     .SURVLRLS
+            MOVE.B  (-GRDWIDTH+1,A0),D1
+            BSR     .SURVLRLS
+            BRA     .UPDGRDCL
+            ; UPDATE NEIGHTBOUR PLAYERS CELL COUNTER    
+.SURVLRLS   CMP.B   #1,D1                   ; NEIGHTBOUR IS P1 CELL?                  
+            BEQ     .NPL1ADD1               ; IF IT'S, ADD 1 TO P1 COUNTER
+            CMP.B   #2,D1                   ; NEIGHTBOUR IS P2 CELL? 
+            BEQ     .NPL2ADD1               ; IF IT'S, ADD 1 TO P2 COUNTER
+            RTS                             ; RETURN TO NEXT NEIGHTBOUR
+.NPL1ADD1   ADD.W   #1,D2                   ; ADD 1 TO NP1 COUNTER 
+            RTS              
+.NPL2ADD1   ADD.W   #1,D3                   ; ADD 1 TO NP2 COUNTER   
+            RTS              
+            ; UPDATE CELLS ON GRID(SURVIVAL RULES)
+.UPDGRDCL   CMP.B   #0,(A0)                 ; IS ACT CELL IS A DEAD CELL?
+            BEQ     .BIRTHRLS               ; IF IT'S, GO TO BIRTH RULES
+            CMP.B   #1,(A0)                 ; ACT CELL IS P1 CELL?
+            BNE     .P2R                    ; IF IT'S, GO TO P2 RULES                    
+            MOVE.W  D2,D4                   ; MOVE P1 NEIGHTBOURS TO D4
+            SUB.W   D3,D4                   ; SUB P2 NEIGHTBOURS TO P1 NEIGHTBOURS
+            CMP.W   #3,D4                   ; NP1-?
+            BEQ     .SETCLTP1
+            CMP.W   #2,D4 
+            BEQ     .SETCLTP1
+            CMP.W   #1,D4
+            BNE     .STCLDEAD
+            CMP.W   #2,D2
+            BGE     .SETCLTP1
+            BRA     .STCLDEAD
+.SETCLTP1   MOVE.B  #1,(A1)
+            BRA     .ENDLOOP
+.P2R        MOVE.W  D3,D4
+            SUB.W   D2,D4
+            CMP.W   #3,D4 
+            BEQ     .SETCLTP2
+            CMP.W   #2,D4 
+            BEQ     .SETCLTP2
+            CMP.W   #1,D4
+            BNE     .STCLDEAD
+            CMP.W   #2,D2
+            BGE     .SETCLTP2
+            BRA     .STCLDEAD
+.SETCLTP2   MOVE.B  #2,(A1)
+            BRA     .ENDLOOP
+.STCLDEAD   MOVE.B  #0,(A1)
+            ; CHECKS IF A NEW CELL IS POSSIBLE TO CREATE
+            ; (BIRTH RULES)
+.BIRTHRLS   CMP.W   #3,D2
+            BNE     .NWPLR2CL
+            CMP.W   #3,D3
+            BNE     .NWPLR1CL
+            BRA     .RANDMNUM
+.NWPLR1CL   MOVE.B  #1,(A1)
+            BRA     .ENDLOOP
+.NWPLR2CL   CMP.W   #3,D3
+            BNE     .ENDLOOP
+            MOVE.B  #2,(A1)
+            BRA     .ENDLOOP
+.RANDMNUM   JSR     UTLRAND                 ; SUBR. TO GET RAN NUM.(1-2)
+            MOVE.B  D1,(A1)  
+.ENDLOOP    ADD.L   #1,A0
+            ADD.L   #1,A1
+            ADD.W   #1,D7
+            DBRA    D6,.LOOP
+            MOVE.W  #GRDWIDTH*GRDHEIGH-1,D0
+            MOVE.L  GRDSRC,A0
+            MOVE.L  GRDDST,A1
+.END        MOVE.B  (A1)+,D1
+            CMP.W   #1,D1
+            BNE     .UPDP2CNT
+            ADD.W   #1,GRDNPLR1             ; ADD 1 TO P1 CELL COUNTER
+.UPDP2CNT   CMP.W   #2,D1
+            BNE     .CLRCELL
+            ADD.W   #1,GRDNPLR2             ; ADD 1 TO P2 CELL COUNTER
+.CLRCELL    CLR.B   (A0)+            
+            DBRA.W  D0,.END
+            
+            MOVEM.L (A7)+,D0-D7/A0-A6
             RTS
-
+            
 ; -----------------------------------------------------------------------------
 GRDSAVE
 ; SAVES THE GRID INTO A FILE IN CSV FORMAT
@@ -226,7 +575,7 @@ GRDLLEFT
 
 ; TODO : PLACE YOUR CODE HERE
 
-            MOVEM.L D0-D7/A0-A6,-(A7)       ; SAVE CONTENT REGISTERS
+            MOVEM.L D0-D3/A0-A6,-(A7)       ; SAVE CONTENT REGISTERS
             
             MOVE.B  #50,D0                  ; CLOSE ALL FILES (RECOMMENDED)
             TRAP    #15
@@ -251,22 +600,24 @@ GRDLLEFT
             MOVE.W  #GRDHEIGH-1,D3
 .LOOP       MOVE.L  A6,A1
             MOVE.B  #53,D0                  ; READ DATA TASK NUMBER
-            MOVE.L  #GRDWIDTH*2+1,D2        ; NUMBER OF BYTES TO READ
+            MOVE.L  #GRDWIDTH*2+1,D2          ; NUMBER OF BYTES TO READ
             TRAP    #15                     ; READ THE DATA
-            ;En teoría llega hasta la mitad de las casillas y se renicia
-            ;para la siguiente fila
-            MOVE.W  #(GRDWIDTH/2)-1,D2      ; COPY HALF OF GRID
+            MOVE.W  #GRDWIDTH/2-1,D2
 .COPY       MOVE.B  (A1)+,D0                ; PICK ONE LOADED CHARACTER
             SUB.B   #'0',D0                 ; CONVERT FROM ASCII TO NUMBER
-            MOVE.B  D0,(A0)+                ; STORE DATA
+            CMP.W   #2,D0
+            BNE     .STORE
+            MOVE.W  #1,D0
+.STORE      MOVE.B  D0,(A0)+                ; STORE DATA
             ADDQ.L  #1,A1                   ; SKIP THE COMMA
             DBRA.W  D2,.COPY
+            ADD.W   #GRDWIDTH/2,A0
             DBRA.W  D3,.LOOP
             MOVE.B  #56,D0                  ; CLOSE FILE
             TRAP    #15
 .END        ADD.L   #512,A7                 ; RESTORE STACK
             
-            MOVEM.L (A7)+,D0-D7/A0-A6       ; RESTORES CONTENT REGISTERS
+            MOVEM.L (A7)+,D0-D3/A0-A6       ; RESTORES CONTENT REGISTERS
             RTS
 
 .MSG        DC.B    'SELECT A CSV FILE TO LOAD',0
@@ -314,25 +665,22 @@ GRDLRGT
             MOVE.B  #53,D0                  ; READ DATA TASK NUMBER
             MOVE.L  #GRDWIDTH*2+1,D2        ; NUMBER OF BYTES TO READ
             TRAP    #15                     ; READ THE DATA
-            ;En teoría llega hasta la mitad de las casillas y se renicia
-            ;para la siguiente fila
-            MOVE.W  #(GRDWIDTH/2)-1,D2      ; COPY HALF OF GRID
-            ;En teoría si se empieza a guadar desde la mitad, se tendría que guardar
-            ;la parte derecha del grid, es decir, por cada fila sse tiene que empezar
-            ;por la mitad y para ello sumando la mitad del grid a donde se guarda 
-            ;tendría que funcionar
-            ADD.W   D2,A0
-            ADD.W   #GRDWIDTH,A1            ; A1 contiene el doble por las comas
+            MOVE.W  #GRDWIDTH/2-1,D2
+            ADD.L   #GRDWIDTH,A1
+            ADD.W   #GRDWIDTH/2,A0
 .COPY       MOVE.B  (A1)+,D0                ; PICK ONE LOADED CHARACTER
             SUB.B   #'0',D0                 ; CONVERT FROM ASCII TO NUMBER
-            MOVE.B  D0,(A0)+                ; STORE DATA
+            CMP.W   #1,D0
+            BNE     .STORE
+            MOVE.W  #2,D0
+.STORE      MOVE.B  D0,(A0)+                ; STORE DATA
             ADDQ.L  #1,A1                   ; SKIP THE COMMA
             DBRA.W  D2,.COPY
             DBRA.W  D3,.LOOP
             MOVE.B  #56,D0                  ; CLOSE FILE
             TRAP    #15
 .END        ADD.L   #512,A7                 ; RESTORE STACK
-            
+
             
             MOVEM.L (A7)+,D0-D7/A0-A6       ; RESTORES CONTENT REGISTERS
             RTS
@@ -348,165 +696,123 @@ GRDPLOT
 ; OUTPUT   : NONE
 ; MODIFIES : NONE
 ; -----------------------------------------------------------------------------
-
-; TODO : PLACE YOUR CODE HERE
-SETCURSOR   MACRO
-            CLR.L   D1
-            MOVE.B  #11,D0                  
-            MOVE.B  #\1,D1
-            LSL     #8,D1
-            MOVE.B  #\2,D1 
-            TRAP    #15
+            ; MACROS
+SETCURSOR   MACRO 
+            MOVE.W  #\1,D1
+            LSL.W   #8,D1          
+            MOVE.B  #\2,D1
+            MOVE.L  #11,D0
+            TRAP    #15 
             ENDM
-            
 SETFLLCLR   MACRO
-            CLR.L   D1
+            MOVEM.L D0-D1,-(A7)
+            MOVE.L  #\1,D1
             MOVE.B  #81,D0                  
-            MOVE.L  #\1,D1
-            TRAP    #15
+            TRAP    #15                     
+            MOVEM.L (A7)+,D0-D1
             ENDM
-            
-SETNUMBER   MACRO
+DSPLYCONT   MACRO
             CLR.L   D1
-            MOVE.B  #3,D0
-            MOVE.W  \1,D1                  
-            TRAP    #15
+            MOVE.W  (\1),D1
+            MOVE.L  #3,D0
+            TRAP    #15 
             ENDM
-            
-SETPENCLR   MACRO
-            CLR.L   D1
-            MOVE.B  #80,D0
-            MOVE.L  #\1,D1
-            TRAP    #15
+PRNTCHR     MACRO
+            CLR.L   (A1)
+            MOVE.W  .CHARPRNT,(A1)
+            MOVE.W  #\1*8,D1
+            MOVE.W  #\2*13,D2
+            MOVE.L  #95,D0
+            TRAP    #15 
             ENDM
+            ; END OF MACROS
             
-PRINTCHAR   MACRO
-            MOVE.B  #6,D0                   ; TASK ID TO PRINT A CHARACTER
-            MOVE.B  #'*',D1                 ; CHARACTER TO PRINT
-            TRAP    #15                     ; PRINT
-            ENDM
-
-            MOVEM.L D0-D7/A0-A6,-(A7)       ; SAVE CONTENT REGISTERS
+            MOVEM.L D0-D7/A0,-(A7)          ; SAVE CONTENT REGISTER
             
-            
-* GRDPXWID   ; GRID DISPLAY WIDTH (PIXELS)           
-* GRDPXHEI   ; GRID DISPLAY HEIGHT(PIXELS)
-* GRDSZCEL   ; GRID CELL SIZE (PIXELS)
-* GRDWIDTH   ; NUMBER OF GRID COLUMNS
-* GRDHEIGH   ; NUMBER OF GRID ROWS
-* GRDHEIGH-1 ; NUMBER OF ROWS-1
-* GRDWIDTH-1 ; NUMBER OF COLUMNS-1
-* NUMCELTOTAL = NUMCOLUMNS*NUMROWS
-* SCRWIDTH   ; SCREEN WIDTH (PIXELS)
-* SCRHEIGH   ; SCREEN HEIGHT (PIXELS)
-* GRDVEMRG   ; TOP MARGIN (2 BUTTON ROWS)
-* GRDMSWID   ; MASK TO GET X FROM GRID OFFSET
-* GRDMSHEI   ; MASK TO GET Y FROM GRID OFFSET
-* GRDXOFF    ; X OFFSETS TO DISPLAY CENTERED GRID
-* GRDYOFF    ; Y OFFSET CENT. GRD
-* GRDSCP1X   ; PLAYER 1 SCORE X (CHAR RESOL.)
-* GRDSCP1Y   ; PLAYER 1 SCORE Y (CHAR RESOL.)
-* GRDSCP2X   ; PLAYER 2 SCORE X (CHAR RES.)
-* GRDSCP2Y   ; PLAYER 2 SCORE Y (CHAR RESOL.)
-* GRDSCNGX   ; NUM. GENER. X (CHAR RESOL.)
-* GRDSCNGY   ; NUM. GENER. Y (CHAR RESOL.)
-
-            ;RECORRER MATRIZ E IR PINTADO
-            ; SET PEN WIDTH/THICKNESS
+            ; SET PEN WIDTH
+            MOVE.L  #1,D1
             MOVE.B  #93,D0
-            MOVE.L  #2,D1
-            TRAP    #15
-            MOVE.W  #GRDHEIGH-1,D6
-            MOVE.W  #GRDWIDTH-1,D7
-            CLR.L   D6
-            CLR.L   D7
-            ; DRAW CELLS COLORS
-            MOVE.L  (GRDDST), A0 
-            MOVE.W  #0,D6
-.ROWS       CMP.W   #GRDHEIGH-1,D6
-            BEQ     .FINFOR1
-            MOVE.W  #0,D7   
-.CLMS       CMP.W   #GRDWIDTH-1,D7
-            BEQ     .FINFOR2
-            ;
-            MOVE.W  D6,D2
-            MOVE.W  D7,D1
-            MOVE.B  (A0)+,D5
-            CMP.B   #0,D5
-            BEQ     .VACIA
-            CMP.B   #1,D5
-            BEQ     .P1
-            ; CASILLA ROJA
-            SETFLLCLR CLRLTRED
-            BRA.W   .PAINT
-.P1         ; CASILLA AZUL
-            SETFLLCLR CLRLTBLU
-.VACIA      ; FONDO NEGRO
-            SETFLLCLR CLRBLACK
-.PAINT      CLR.L   D1
-            MOVE.B  D7,D1
-            MULU    #GRDSZCEL,D1
-            ADD.W   #GRDXOFF,D1
-            MOVE.W  D1,D3
-            ADD.W   #GRDSZCEL,D3
-            MOVE.W  D6,D2
-            MULU    #GRDSZCEL,D2
-            ADD.W   #GRDYOFF,D2
-            MOVE.W  D2,D4
-            ADD.W   #GRDSZCEL,D4
+            TRAP    #15 
             
-            MOVE.B  #87,D0
-            TRAP    #15
-            ;
-            ADDQ.W  #1,D7
-            BRA.W   .CLMS
-.FINFOR2    ADDA.L  #GRDWIDTH,A0            ; @ NEXT ROW
-            ADDQ.W  #1,D6
-            BRA.W   .ROWS
-.FINFOR1    ;YA ESTA :D        
-            
-            ;SCORES
-            ; DRAW *
-            MOVE.W  (GRDNPLR1),D2
-            MOVE.W  (GRDNPLR2),D3
-            CMP.W   D2,D3 
-            BEQ     .EQUALS
-            BGT     .P2MRSCR                ; PLAYER1<PLAYER2
-            SETCURSOR GRDSCP1X,GRDSCP1Y-1   ; SET CURSOR
-            SETFLLCLR CLRLTBLU              ; SET FILL COLOR
+            MOVE.W  GRDNPLR1,D1
+            CMP.W   GRDNPLR2,D1             ; WHO IS WINNING?
+            BEQ     .EQUALS                 ; TIE
+            BLT     .P2MRSCR                ; P1<P2, P2 WINS
+            SETFLLCLR CLRLTBLU              ; SET FILL COLOR                       
+            PRNTCHR GRDSCP1X,GRDSCP1Y       ; PRINT '*'
+            BRA     .EXIT     
+.P2MRSCR    SETFLLCLR CLRLTRED              ; SET FILL COLOR
+            PRNTCHR GRDSCP2X,GRDSCP2Y       ; PRINT '*'
             BRA     .EXIT
-.P2MRSCR    SETCURSOR GRDSCP2X,GRDSCP2Y-1   ; SET CURSOR
+.EQUALS     SETFLLCLR CLRLTBLU              ; SET FILL COLOR
+            PRNTCHR GRDSCP1X,GRDSCP1Y       ; PRINT '*'
             SETFLLCLR CLRLTRED              ; SET FILL COLOR
-            BRA     .EXIT
-.EQUALS     SETCURSOR GRDSCP1X,GRDSCP1Y-1   ; SET CURSOR
-            SETFLLCLR CLRLTBLU              ; SET FILL COLOR
-            PRINTCHAR
-            SETCURSOR GRDSCP2X,GRDSCP2Y-1   ; SET CURSOR
-            SETFLLCLR CLRLTRED              ; SET FILL COLOR
-            PRINTCHAR
-.EXIT       ;PLAYER SCORES
-            SETPENCLR CLRWHITE              ; SET PEN COLOR       
-            ; PLAYER 1
-            SETCURSOR GRDSCP1X,GRDSCP1Y     ; SET CURSOR
-            SETFLLCLR CLRLTBLU              ; SET FILL COLOR
-            SETNUMBER D2                    ; WRITE NUMBER
-            
+            PRNTCHR GRDSCP2X,GRDSCP2Y       ; PRINT '*'
+            ;PLOT SCORES
+.EXIT       ; PLAYER 1
+            SETCURSOR GRDSCP1X,GRDSCP1Y     ; SET CURSOR                  
+            SETFLLCLR CLRLTBLU              ; SET FILL COLOR 
+            DSPLYCONT GRDNPLR1              ; PLOT CONT NUMBER
             ; GENERATIONS
-            SETCURSOR GRDSCNGX,GRDSCNGY     ; SET CURSOR
-            SETFLLCLR CLRLTGRN              ; SET FILL COLOR
-            SETNUMBER (GRDNGEN)             ; WRITE NUMBER
-
+            SETCURSOR GRDSCNGX,GRDSCNGY     ; SET CURSOR                  
+            SETFLLCLR CLRMDGRN              ; SET FILL COLOR 
+            DSPLYCONT GRDNGEN               ; PLOT CONT NUMBER
             ; PLAYER 2
-            SETCURSOR GRDSCP2X,GRDSCP2Y     ; SET CURSOR
-            SETFLLCLR CLRLTRED              ; SET FILL COLOR
-            SETNUMBER D3                    ; WRITE NUMBER
-            
-            ;GRID
-            SETPENCLR CLRDKGRN              ; SET PEN COLOR
-            
+            SETCURSOR GRDSCP2X,GRDSCP2Y     ; SET CURSOR        
+            SETFLLCLR CLRLTRED              ; SET FILL COLOR 
+            DSPLYCONT GRDNPLR2              ; PLOT CONT NUMBER
+            ; DRAW CELLS
+            MOVE.L  (GRDDST), A0            ; COPY @ OF GRDDST
+            CLR.L   D3                      ; COLMN COUNTER
+            CLR.L   D4                      ; ROW COUNTER
+            CLR.L   D5                      ; CELL COUNTER
+            MOVE.W  #GRDYOFF,D2             ; TOP Y 
+            MOVE.W  #GRDXOFF,D1             ; LEFT X 
+            MOVE.W  #GRDWIDTH,D6            ; NUM. COLS
+            MOVE.W  #GRDWIDTH,D7
+            MULU.W  #GRDHEIGH,D7            ; TOTAL CELLS
+.STRT       CMP.W   D7,D5                   ; ALL CELL PAINTED?
+            BEQ     .DRWGRID                ; IF IT'S, DRAW GRID
+            CMP     #0,D5                   ; IF NOT,PAINT CELLS 
+            BEQ     .CLMN                   
+            ADDQ.W  #1,D3
+.CLMN       ADDQ.W  #1,D5
+            CMP.W   D6,D3    
+            BGE     .ROW
+            CMP.B   #0,(A0)+                ; EMPTY CELL?
+            BEQ     .STRT                   ; IF IT'S, NEXT CELL
+            BRA     .DWCL                   ; IF NOT, DRAW CELL
+.ROW        ADDQ.W  #1,D4                   ; NEW ROW
+            CLR.W   D3                      ; NEW COLUMN
+            CMP.B   #0,(A0)+                ; EMPTY CELL?
+            BEQ     .STRT                   ; IF IT'S, NEXT CELL
+            BRA     .DWCL                   ; IF NOT, DRAW CELL
+.DWCL       MOVEM.L  D0-D4/A0,-(A7)
+            CMP.B   #1,-(A0)                ; WHOSE PLAYER CELL?
+            BEQ     .P1CEL                  ; IF IT'S 1 = PLYR 1
+            SETFLLCLR  CLRLTRED             ; SET FILL COLOR
+            BRA     .DRAW                   ; JMP TO PLOT CELL
+.P1CEL      SETFLLCLR  CLRLTBLU             ; SET FILL COLOR
+.DRAW       ; CALC CELL POS. & DRAW IT 
+            MULU.W  #GRDSZCEL,D3
+            MULU.W  #GRDSZCEL,D4
+            ADD.W   D1,D3
+            MOVE.W  D3,D1                   ; X1
+            ADD.W   #GRDSZCEL,D3            ; X2
+            ADD.L   D2,D4
+            MOVE.W  D4,D2                   ; Y1
+            ADD.W   #GRDSZCEL,D4            ; Y2
+            MOVE.W  #87,D0
+            TRAP    #15
+            MOVEM.L (A7)+,D0-D4/A0
+            BRA     .STRT
+.DRWGRID    ;DRAW GRID
+            ; SET PEN COLOR              
+            MOVE.B  #80,D0
+            MOVE.L  #CLRDKGRN,D1
+            TRAP    #15
             ; DRAW LINES
             MOVE.B  #84,D0
-            
             ; VERTICAL                       
             MOVE.W  #GRDWIDTH,D5
             MOVE.W  #GRDXOFF,D1             ; X1
@@ -514,61 +820,26 @@ PRINTCHAR   MACRO
             MOVE.W  #GRDXOFF,D3             ; X2
             MOVE.W  #GRDPXHEI,D4
             ADD.W   D2,D4                   ; Y2
-            
 .LNVRTCL    TRAP    #15
             ADD.W   #GRDSZCEL,D1
             MOVE.W  D1,D3               
             DBRA.W  D5,.LNVRTCL
-            
             ; HORIZONTAL
             MOVE.W  #GRDHEIGH,D5
             MOVE.W  #GRDXOFF,D1             ; X1 (Y1 SAME AS VERTICAL)
             MOVE.W  #GRDPXWID,D3
             ADD.W   D1,D3                   ; X2
             MOVE.W  #GRDYOFF,D4             ; Y2
-            
 .LNHRZNTL   TRAP    #15           
             ADD.W   #GRDSZCEL,D2
             MOVE.W  D2,D4
             DBRA.W  D5,.LNHRZNTL
             
-            MOVEM.L (A7)+,D0-D7/A0-A6       ; RESTORE CONTENT REGISTERS
-     
+            MOVEM.L (A7)+,D0-D7/A0
             RTS
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+ 
+.CHARPRNT   DC.B    '*',0
+            
 
 
 

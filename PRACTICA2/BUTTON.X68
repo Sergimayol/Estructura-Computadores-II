@@ -124,7 +124,7 @@ BTNPLOT
 
             MOVEM.L D0-D7/A0-A2,-(A7)       ; Save content registers
             
-            ; SET PEN COLOR
+*           ; SET PEN COLOR
             MOVE.B  #80,D0
             MOVE.L  #BTNPENCL,D1
             TRAP    #15
@@ -133,23 +133,16 @@ BTNPLOT
             MOVE.B  #93,D0
             MOVE.L  #BTNPENWD,D1
             TRAP    #15
-            
-            CMP.B   #0,4(A0)                
-            BEQ     .MOUSEOUT
-    
-            CMP.B   #2,4(A0) 
-            BEQ     .MOUPRESD 
-    
-            ; MOUSE INSIDE   
-            MOVE.L  #BTNSELCL,D1
-            BRA     .SALIR
-              
-.MOUPRESD   MOVE.L  #BTNPRSCL,D1            ; MOUSE PRESSED
-            BRA     .SALIR
-            
-.MOUSEOUT   MOVE.L  #CLRBLACK,D1            ; MOUSE OUTSIDE
-            
-.SALIR      MOVE.B  #81,D0                  ; SET FILL COLOR
+            ; DRAW FILL COLOR BUTTON
+            CMP.B   #1,4(A0)                
+            BEQ     .MOUIN
+            MOVE.L  #CLRBLACK,D1            ; MOUSE OUTSIDE
+            CMP.B   #3,4(A0) 
+            BNE     .EXIT 
+            MOVE.L  #BTNPRSCL,D1            ; MOUSE PRESSED
+            BRA     .EXIT              
+.MOUIN      MOVE.L  #BTNSELCL,D1            ; MOUSE INSIDE
+.EXIT       MOVE.B  #81,D0                  ; SET FILL COLOR
             TRAP    #15
             
             MOVE.L  (A0),A1                 ; COPY @ SDB OF BUTTON
@@ -173,7 +166,7 @@ BTNPLOT
             ADD.W   D4,D5                   ; LOWER Y
             MOVE.W  D5,D4 
             
-            ; DRAW BUTTON
+           ; DRAW BUTTON
             MOVE.B  #87,D0
             TRAP    #15
             
@@ -215,6 +208,7 @@ BTNPLOT
             
             RTS
                 
+
 
 *~Font name~Courier New~
 *~Font size~14~
