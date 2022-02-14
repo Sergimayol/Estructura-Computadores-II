@@ -394,7 +394,7 @@ GRDRUPD
 .UPDGRDCL   CMP.B   #0,(A0)                 ; IS ACT CELL IS A DEAD CELL?
             BEQ     .BIRTHRLS               ; IF IT'S, GO TO BIRTH RULES
             CMP.B   #1,(A0)                 ; ACT CELL IS P1 CELL?
-            BNE     .P2R                    ; IF IT'S, GO TO P2 RULES                    
+            BNE     .P2RULES                    ; IF IT'S, GO TO P2 RULES                    
             MOVE.W  D2,D4                   ; MOVE P1 NEIGHTBOURS TO D4
             SUB.W   D3,D4                   ; SUB P2 NEIGHTBOURS TO P1 NEIGHTBOURS
             CMP.W   #3,D4                   ; NP1-?
@@ -408,7 +408,7 @@ GRDRUPD
             BRA     .STCLDEAD
 .SETCLTP1   MOVE.B  #1,(A1)
             BRA     .ENDLOOP
-.P2R        MOVE.W  D3,D4
+.P2RULES    MOVE.W  D3,D4
             SUB.W   D2,D4
             CMP.W   #3,D4 
             BEQ     .SETCLTP2
@@ -840,6 +840,7 @@ PRNTCHR     MACRO
  
 .CHARPRNT   DC.B    '*',0
             
+
 
 
 
